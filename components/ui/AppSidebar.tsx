@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -12,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 import {
@@ -22,8 +24,18 @@ import {
 
 import Image from "next/image";
 import { SlideBarMenuItems } from "@/lib/data/SlideBarMenuItems";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useRouter } from "next/navigation";
 
 export function AppSidebar() {
+  const { logout, user } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
+
   return (
     <Sidebar collapsible="icon" className="border-r bg-red-100">
       {/* Header */}
@@ -90,6 +102,25 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
+
+      {/* Footer */}
+      <SidebarFooter className="border-t p-3">
+        <div className="space-y-2">
+          {user && (
+            <p className="text-xs text-muted-foreground px-2 truncate group-data-[collapsible=icon]:hidden">
+              {user.email}
+            </p>
+          )}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-data-[collapsible=icon]:justify-center"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+          </button>
+        </div>
+      </SidebarFooter>
 
     </Sidebar>
   );

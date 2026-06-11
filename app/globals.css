@@ -4,9 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ==========================================================================
-   GLOBAL APP WINDOW ANTI-SHIFT CORRECTIONS (Tailwind v4 Clean Layer Layout)
-   ========================================================================== */
 html {
   scrollbar-gutter: stable !important;
 }
