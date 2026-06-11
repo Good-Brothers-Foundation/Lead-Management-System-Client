@@ -7,13 +7,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LeadFormData } from "@/lib/types/lead";
-import { Search, UserCheck, Phone, Mail, Eye } from "lucide-react";
-import LeadDetailSheet from "./LeadDetailSheet"; // <--- Import drawer layout 
-import { dummyLeads } from "@/lib/data/LeadDummyData";
+import { Search, UserCheck, Phone, Mail, Eye, RefreshCw } from "lucide-react";
+import LeadDetailSheet from "./LeadDetailSheet";
 import Image from "next/image";
+import { useLeads } from "@/hooks/use-leads";
 
 export default function AllLeadsTable() {
-  const [leads, setLeads] = useState<LeadFormData[]>(dummyLeads);
+  const { leads, isLoading, error, refetch, updateLead } = useLeads();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -26,13 +26,9 @@ export default function AllLeadsTable() {
     setIsSheetOpen(true);
   };
 
-  // State core synchronizer that intercepts updates from the sheet form callback
-  const handleUpdateLeadRecord = (updatedLead: LeadFormData) => {
-    setLeads((prevLeads) =>
-      prevLeads.map((item) => (item.phone === updatedLead.phone ? updatedLead : item))
-    );
-    setSelectedLead(updatedLead); // Keep updated record active within context bounds
-    console.log("Database payload sync confirmed:", updatedLead);
+  const handleUpdateLeadRecord = async (updatedLead: LeadFormData) => {
+    const savedLead = await updateLead(updatedLead);
+    setSelectedLead(savedLead);
   };
 
   const filteredLeads = leads.filter((lead) => {
@@ -85,6 +81,15 @@ export default function AllLeadsTable() {
 
       {/* Main Table Interface Grid Rendering Block Frame */}
       <div className="border border-border bg-card rounded-xl shadow-sm overflow-hidden">
+        {error && (
+          <div className="flex items-center justify-between gap-4 border-b border-border bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <span>{error}</span>
+            <Button type="button" variant="outline" size="sm" onClick={refetch} className="gap-2">
+              <RefreshCw className="h-3.5 w-3.5" />
+              Retry
+            </Button>
+          </div>
+        )}
         <Table>
           <TableHeader className="bg-muted/40">
             <TableRow className="hover:bg-transparent border-b border-border">
@@ -98,11 +103,17 @@ export default function AllLeadsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLeads.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  Loading leads...
+                </TableCell>
+              </TableRow>
+            ) : filteredLeads.length > 0 ? (
               filteredLeads.map((lead, idx) => {
                 const statusMeta = getStatusStyles(lead.status);
                 return (
-                  <TableRow key={idx} className="border-b border-border hover:bg-muted/20 transition-colors">
+                  <TableRow key={lead._id || idx} className="border-b border-border hover:bg-muted/20 transition-colors">
                     <TableCell className="font-medium py-3.5">
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-foreground tracking-tight">{lead.fullName}</span>

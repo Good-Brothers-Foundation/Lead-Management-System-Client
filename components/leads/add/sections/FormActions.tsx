@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 
-export default function FormActions() {
+interface FormActionsProps {
+  isSubmitting?: boolean;
+}
+
+export default function FormActions({ isSubmitting = false }: FormActionsProps) {
   return (
     <div className="flex justify-end items-center gap-4 pt-4 border-t border-border">
       <Button
@@ -18,6 +22,7 @@ export default function FormActions() {
 
       <Button 
         type="submit" 
+        disabled={isSubmitting}
         className="h-11 px-6 font-medium text-white shadow-sm transition-colors rounded-md cursor-pointer"
         style={{
           backgroundColor: "var(--button-primary)",
@@ -25,7 +30,7 @@ export default function FormActions() {
         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--button-primary-hover)")}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--button-primary)")}
       >
-        Add Lead
+        {isSubmitting ? "Adding Lead..." : "Add Lead"}
       </Button>
     </div>
   );

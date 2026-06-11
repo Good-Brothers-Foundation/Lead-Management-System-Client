@@ -5,7 +5,7 @@ import { useState } from "react";
 import { LeadFormData } from "@/lib/types/lead";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Eye, MessageSquare } from "lucide-react";
+import { Calendar, Clock, User, Eye } from "lucide-react";
 import LeadDetailDrawer from "../leads/all/LeadDetailSheet";
 import Image from "next/image";
 
@@ -52,7 +52,7 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {leads.map((lead) => (
           <div
-            key={lead.id}
+            key={lead._id}
             className="group relative flex flex-col justify-between p-6 bg-card border border-border rounded-xl shadow-sm transition-all"
           >
             <div className="space-y-4">
@@ -127,7 +127,7 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
 
       {/* Slide-out Drawer Integration */}
       <LeadDetailDrawer
-        key={selectedLead?.id || "empty-follow-drawer"}
+        key={selectedLead?._id || "empty-follow-drawer"}
         lead={selectedLead}
         isOpen={selectedLead !== null}
         onClose={() => setSelectedLead(null)}

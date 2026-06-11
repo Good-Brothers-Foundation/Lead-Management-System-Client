@@ -2,7 +2,7 @@ import { LeadFormData } from "@/lib/types/lead";
 
 export const dummyLeads: LeadFormData[] = [
   {
-    id: "1",
+    _id: "1",
     fullName: "Amit Sharma",
     phone: "+91 9810123456",
     alternatePhone: "+91 1123456789",
@@ -22,7 +22,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Lead reached out directly on LinkedIn after viewing our recent portfolio drops. Expects a preliminary scope proposal before the upcoming Monday stakeholder review call."
   },
   { 
-    id: "2",
+    _id: "2",
     fullName: "Priya Patel",
     phone: "+91 9920456789",
     email: "priya@boutiquefinds.com",
@@ -41,7 +41,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Filled out the native inbound contact form on our website portfolio. High budget availability but requires concrete infrastructure benchmarks during the first technical discovery meeting."
   },
   {
-    id: "3",
+    _id: "3",
     fullName: "Rohan Malhotra",
     phone: "+91 9560789123",
     alternatePhone: "",
@@ -61,7 +61,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Interacted with our Instagram lead generation ad banner. Preferential contact channel selected is WhatsApp text loops. Needs quick initial quote options."
   },
   {
-    id: "6", // 🚀 NEW: Today's Follow-up (High Priority)
+    _id: "6", // 🚀 NEW: Today's Follow-up (High Priority)
     fullName: "Rajesh Kumar",
     phone: "+91 9876543210",
     alternatePhone: "",
@@ -81,7 +81,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Requires contract confirmation call today morning. Tech stack is finalized as Next.js and Tailwind CSS."
   },
   {
-    id: "4",
+    _id: "4",
     fullName: "Vikram Singh",
     phone: "+91 8800112233",
     alternatePhone: "+91 9911223344",
@@ -101,7 +101,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Direct referral from an existing client. Technical draft specification document was delivered yesterday morning. Waiting for architecture confirmation review loops."
   },
   {
-    id: "7", // 🚀 NEW: Today's Follow-up (Medium Priority, WhatsApp focus)
+    _id: "7", // 🚀 NEW: Today's Follow-up (Medium Priority, WhatsApp focus)
     fullName: "Neha Gupta",
     phone: "+91 9111222333",
     alternatePhone: "",
@@ -121,7 +121,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Prefers updates via WhatsApp loops. Needs guidance on payment processing setups for domestic credit cards."
   },
   {
-    id: "5",
+    _id: "5",
     fullName: "Ananya Iyer",
     phone: "+91 9711556677",
     email: "ananya.iyer@gmail.com",
@@ -140,7 +140,7 @@ export const dummyLeads: LeadFormData[] = [
     notes: "Low budget pool inbound inquiry. Will require automation filtering script check cycles or lightweight pre-built boilerplate layout recommendations."
   },
   {
-    id: "8", // 🚀 NEW: Overdue/Past Edge-case (Verifies boundary rules exclude this from 'Today' and 'Upcoming')
+    _id: "8", // 🚀 NEW: Overdue/Past Edge-case (Verifies boundary rules exclude this from 'Today' and 'Upcoming')
     fullName: "Siddharth Mehta",
     phone: "+91 9654321098",
     email: "sid@mehtatraders.co.in",

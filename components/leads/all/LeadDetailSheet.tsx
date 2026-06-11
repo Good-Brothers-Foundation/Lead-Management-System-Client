@@ -27,7 +27,7 @@ interface LeadDetailDrawerProps {
   lead: LeadFormData | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedLead: LeadFormData) => void;
+  onUpdate: (updatedLead: LeadFormData) => Promise<void> | void;
 }
 
 export default function LeadDetailDrawer({
@@ -38,11 +38,18 @@ export default function LeadDetailDrawer({
 }: LeadDetailDrawerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LeadFormData | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (lead) {
-      setEditData({ ...lead });
-      setIsEditing(false);
+      const syncLeadState = window.setTimeout(() => {
+        setEditData({ ...lead });
+        setIsEditing(false);
+        setSaveError(null);
+      }, 0);
+
+      return () => window.clearTimeout(syncLeadState);
     }
   }, [lead, isOpen]);
 
@@ -60,11 +67,22 @@ export default function LeadDetailDrawer({
     setEditData((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editData) {
-      onUpdate(editData);
-      setIsEditing(false);
+      setIsSaving(true);
+      setSaveError(null);
+
+      try {
+        await onUpdate(editData);
+        setIsEditing(false);
+      } catch (error) {
+        setSaveError(
+          error instanceof Error ? error.message : "Could not update this lead."
+        );
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -415,6 +433,12 @@ export default function LeadDetailDrawer({
           </div>
 
           {/* Fixed Bottom Action Section Container */}
+          {saveError && (
+            <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {saveError}
+            </p>
+          )}
+
           <DrawerFooter className="shrink-0 flex flex-row justify-end items-center gap-4 px-0 pt-8 border-t border-border bg-card">
             {isEditing ? (
               <>
@@ -422,16 +446,18 @@ export default function LeadDetailDrawer({
                   type="button"
                   variant="outline"
                   onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
                   className="h-11 px-8 font-semibold cursor-pointer"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
+                  disabled={isSaving}
                   className="h-11 px-10 font-semibold text-white shadow-md transition-all cursor-pointer"
                   style={{ backgroundColor: "var(--button-secondary)" }}
                 >
-                  Update Lead
+                  {isSaving ? "Updating..." : "Update Lead"}
                 </Button>
               </>
             ) : (

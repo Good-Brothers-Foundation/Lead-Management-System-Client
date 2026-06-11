@@ -7,10 +7,6 @@ export const SlideBarMenuItems = [
     defaultOpen: true,
     items: [
       {
-        title: "Overview",
-        href: "/dashboard/overview",
-      },
-      {
         title: "Analytics",
         href: "/dashboard/analytics",
       },

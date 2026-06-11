@@ -1,12 +1,11 @@
 // app/follow-ups/[items]/page.tsx
 "use client";
 
-import { useState } from "react";
 import { useParams } from "next/navigation";
 import { LeadFormData } from "@/lib/types/lead";
 import { filterFollowUpsByRoute } from "@/lib/utils";
 import { FollowUpList } from "@/components/followUps/FollowUpList";
-import { dummyLeads } from "@/lib/data/LeadDummyData";
+import { useLeads } from "@/hooks/use-leads";
 
 
 export default function FollowUps() {
@@ -17,15 +16,13 @@ export default function FollowUps() {
     ? params.items[0] 
     : params?.items || "today";
 
-  const [leads, setLeads] = useState<LeadFormData[]>(dummyLeads);
+  const { leads, isLoading, error, updateLead } = useLeads();
 
   // Compute live state calculation downstream matching parametric routes
   const filteredLeads = filterFollowUpsByRoute(leads, currentItem);
 
-  const handleUpdateLead = (updatedLead: LeadFormData) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead))
-    );
+  const handleUpdateLead = async (updatedLead: LeadFormData) => {
+    await updateLead(updatedLead);
   };
 
   const getHeaderDescription = () => {
@@ -55,11 +52,21 @@ export default function FollowUps() {
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Follow Up Overview List
         </h2>
-        <FollowUpList
-          leads={filteredLeads}
-          onUpdateLead={handleUpdateLead}
-          emptyMessage={`No follow-up records listed under the "${currentItem}" classification section.`}
-        />
+        {error ? (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-sm text-destructive">
+            {error}
+          </div>
+        ) : isLoading ? (
+          <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
+            Loading follow-up records...
+          </div>
+        ) : (
+          <FollowUpList
+            leads={filteredLeads}
+            onUpdateLead={handleUpdateLead}
+            emptyMessage={`No follow-up records listed under the "${currentItem}" classification section.`}
+          />
+        )}
       </div>
     </main>
   );

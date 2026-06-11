@@ -1,6 +1,5 @@
-// types/lead.ts
 export interface LeadFormData {
-  id: string;
+  _id?: string;
   fullName: string;
   phone: string;
   source: string;
@@ -19,4 +18,8 @@ export interface LeadFormData {
   contactMethod?: string;
   requirements?: string;
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+export type LeadPayload = Omit<LeadFormData, "_id" | "createdAt" | "updatedAt">;
