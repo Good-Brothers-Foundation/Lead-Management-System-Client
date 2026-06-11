@@ -4,9 +4,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
-  /* Basic */       
+/* ==========================================================================
+   GLOBAL APP WINDOW ANTI-SHIFT CORRECTIONS (Tailwind v4 Clean Layer Layout)
+   ========================================================================== */
+html {
+  scrollbar-gutter: stable !important;
+}
 
+/* Explicitly strip dynamic layouts from attempting window offset modifications */
+html, 
+body, 
+main,
+div[data-sidebar-wrapper] {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+}
+
+:root {
   /* Colors */
   --primary: oklch(0.205 0 0);
   --secondary: oklch(0.97 0 0);
@@ -51,7 +65,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
 }
 
 @theme inline {
@@ -135,15 +148,12 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-
   }
   body {
     @apply bg-background text-foreground;
-
   }
   html {
     @apply font-sans;
-
   }
 
   /* Radix UI Slider Styles */

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/collapsible";
 
 import Image from "next/image";
-import { SlideBarMenuItems } from "@/lib/data";
+import { SlideBarMenuItems } from "@/lib/data/SlideBarMenuItems";
 
 export function AppSidebar() {
   return (

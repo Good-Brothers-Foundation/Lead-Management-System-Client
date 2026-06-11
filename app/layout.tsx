@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,18 +33,20 @@ export default function RootLayout({
       lang="en"
       className={cn(geistSans.variable, geistMono.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full min-w-full flex flex-col"> <TooltipProvider>
-        <SidebarProvider>
-          <AppSidebar/>
-          <main className="flex-1">
-            <div className="border-b p-1 sticky top-0 bg-[var(--sidebar)]">
-            <SidebarTrigger />
+      <body className="min-h-screen w-screen overflow-x-hidden bg-background text-foreground antialiased flex"> 
+        <TooltipProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <div className="flex-1 flex flex-col min-w-0 min-h-screen relative">
+              <header className="sticky top-0 z-40 w-full border-b bg-sidebar p-2 flex items-center h-11 shrink-0 select-none">
+                <SidebarTrigger className="relative z-50 h-8 w-8" />
+              </header>
+              <main className="flex-1 overflow-y-auto w-full relative">
+                {children}
+              </main>
             </div>
-
-            {children}
-          </main>
-        </SidebarProvider>
-      </TooltipProvider>
+          </SidebarProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

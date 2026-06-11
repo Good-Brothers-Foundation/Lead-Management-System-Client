@@ -22,16 +22,16 @@ export const SlideBarMenuItems = [
     defaultOpen: true,
     items: [
       {
+        title: "Add Leads",
+        href: "/leads/add",
+      },
+      {
         title: "All Leads",
         href: "/leads/all",
       },
       {
-        title: "New Leads",
-        href: "/leads/new",
-      },
-      {
-        title: "Qualified Leads",
-        href: "/leads/qualified",
+        title: "Converted Leads",
+        href: "/leads/converted",
       },
     ],
   },

@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 
 export default function FollowUps() {
   const params = useParams();
-  console.log("FollowUps Params:", params);
 
   return (
     <main className="p-6">
