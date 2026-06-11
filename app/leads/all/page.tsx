@@ -1,12 +1,16 @@
-export default function AllLeads() {
+import AllLeadsTable from "@/components/leads/all/AllLeadsTable";
 
+export default function AllLeadsPage() {
   return (
-    <main className="p-6">
-      <div className="space-y-4">
-          <h1 className="text-3xl font-bold capitalize">
-            All Leads
-          </h1>
+    <div className="p-6 space-y-6 w-full">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">All Leads</h1>
+        <p className="text-muted-foreground mt-1">
+          Monitor incoming customer records, change state parameters, and run routing checks.
+        </p>
       </div>
-    </main>
+
+      <AllLeadsTable />
+    </div>
   );
 }

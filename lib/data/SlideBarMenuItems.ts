@@ -29,10 +29,6 @@ export const SlideBarMenuItems = [
         title: "All Leads",
         href: "/leads/all",
       },
-      {
-        title: "Converted Leads",
-        href: "/leads/converted",
-      },
     ],
   },
   {

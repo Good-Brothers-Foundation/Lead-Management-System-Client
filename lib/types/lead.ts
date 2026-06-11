@@ -1,5 +1,6 @@
 // types/lead.ts
 export interface LeadFormData {
+  id: string;
   fullName: string;
   phone: string;
   source: string;
