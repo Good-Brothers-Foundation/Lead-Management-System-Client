@@ -14,6 +14,7 @@ import { LeadFormData } from "@/lib/types/lead";
 
 export default function AddLeadForm() {
   const [formData, setFormData] = useState<LeadFormData>({
+    id : "",
     fullName: "",
     phone: "",
     alternatePhone: "",
@@ -78,6 +79,7 @@ export default function AddLeadForm() {
         });
         
         setFormData({
+          id: "",
           fullName: "",
           phone: "",
           alternatePhone: "",
