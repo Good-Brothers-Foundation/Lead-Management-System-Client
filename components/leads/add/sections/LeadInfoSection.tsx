@@ -119,9 +119,12 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
               <SelectValue placeholder="Assign Lead" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
-              <SelectItem value="mayank">Mayank</SelectItem>
-              <SelectItem value="rahul">Rahul</SelectItem>
-              <SelectItem value="priya">Priya</SelectItem>
+              <SelectItem value="mayank-kansal">Mayank Kansal</SelectItem>
+              <SelectItem value="dipish-bisht">Dipish Bisht</SelectItem>
+              <SelectItem value="dheeraj-patel">Dheeraj Patel</SelectItem>
+              <SelectItem value="vinay-suyal">Vinay Suyal</SelectItem>
+              <SelectItem value="ravi-negi">Ravi Negi</SelectItem>
+              <SelectItem value="rahul-rana">Rahul Rana</SelectItem>
             </SelectContent>
           </Select>
         </div>

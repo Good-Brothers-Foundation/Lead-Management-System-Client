@@ -39,8 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     // Valid credentials
-    const VALID_EMAIL = 'mayank@gmail.com'
-    const VALID_PASSWORD = 'mayank@123'
+    const VALID_EMAIL = 'bkdadmin@gmail.com'
+    const VALID_PASSWORD = 'bkdadmin@123'
 
     if (!email || !password) {
       throw new Error('Email and password are required')

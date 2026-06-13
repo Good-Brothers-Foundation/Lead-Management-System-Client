@@ -80,7 +80,7 @@ export default function AllLeadsTable() {
       </div>
 
       {/* Main Table Interface Grid Rendering Block Frame */}
-      <div className="border border-border bg-card rounded-xl shadow-sm overflow-hidden">
+      <div className="border border-border bg-card rounded-xl shadow-sm overflow-x-auto">
         {error && (
           <div className="flex items-center justify-between gap-4 border-b border-border bg-destructive/10 px-4 py-3 text-sm text-destructive">
             <span>{error}</span>

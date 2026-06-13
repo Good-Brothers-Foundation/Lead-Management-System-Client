@@ -92,7 +92,7 @@ export default function LeadDetailDrawer({
       <DrawerContent className="mx-auto max-h-[92vh] flex flex-col bg-card border-t border-border">
         
         {/* Fixed Header */}
-        <DrawerHeader className="shrink-0 border-b border-border px-8 py-6 flex flex-row items-center justify-between gap-4">
+        <DrawerHeader className="shrink-0 border-b border-border px-4 sm:px-8 py-4 sm:py-6 flex flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-left">
             <DrawerTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               {isEditing ? "Modify Lead Details" : lead.fullName}
@@ -118,10 +118,10 @@ export default function LeadDetailDrawer({
         {/* Scrollable Form Body Container */}
         <form
           onSubmit={handleFormSubmit}
-          className="flex-1 overflow-y-auto px-8 py-10 space-y-10"
+          className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 sm:py-10 space-y-8 sm:space-y-10"
         >
           {/* Section 1: Personal Information */}
-          <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
+          <div className="p-4 sm:p-6 border border-border rounded-xl bg-background/50 space-y-4 sm:space-y-6">
             <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
               Personal Information
             </h3>
@@ -167,7 +167,7 @@ export default function LeadDetailDrawer({
           </div>
 
           {/* Section 2: Lead Information */}
-          <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
+          <div className="p-4 sm:p-6 border border-border rounded-xl bg-background/50 space-y-4 sm:space-y-6">
             <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
               Lead Information
             </h3>
@@ -295,8 +295,12 @@ export default function LeadDetailDrawer({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      <SelectItem value="mayank">Mayank</SelectItem>
-                      <SelectItem value="priya">Priya</SelectItem>
+                       <SelectItem value="mayank-kansal">Mayank Kansal</SelectItem>
+              <SelectItem value="dipish-bisht">Dipish Bisht</SelectItem>
+              <SelectItem value="dheeraj-patel">Dheeraj Patel</SelectItem>
+              <SelectItem value="vinay-suyal">Vinay Suyal</SelectItem>
+              <SelectItem value="ravi-negi">Ravi Negi</SelectItem>
+              <SelectItem value="rahul-rana">Rahul Rana</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -309,7 +313,7 @@ export default function LeadDetailDrawer({
           </div>
 
           {/* Section 3: Follow Up Information */}
-          <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
+          <div className="p-4 sm:p-6 border border-border rounded-xl bg-background/50 space-y-4 sm:space-y-6">
             <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
               Follow Up Information
             </h3>
@@ -392,7 +396,7 @@ export default function LeadDetailDrawer({
           </div>
 
           {/* Section 4: Text Areas */}
-          <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
+          <div className="p-4 sm:p-6 border border-border rounded-xl bg-background/50 space-y-4 sm:space-y-6">
             <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
               Additional Information
             </h3>
@@ -439,7 +443,7 @@ export default function LeadDetailDrawer({
             </p>
           )}
 
-          <DrawerFooter className="shrink-0 flex flex-row justify-end items-center gap-4 px-0 pt-8 border-t border-border bg-card">
+          <DrawerFooter className="shrink-0 flex flex-row justify-end items-center gap-3 sm:gap-4 px-0 pt-6 sm:pt-8 border-t border-border bg-card">
             {isEditing ? (
               <>
                 <Button
