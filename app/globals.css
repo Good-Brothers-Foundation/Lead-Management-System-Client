@@ -8,9 +8,8 @@ html {
   scrollbar-gutter: stable !important;
 }
 
-/* Explicitly strip dynamic layouts from attempting window offset modifications */
-html, 
-body, 
+html,
+body,
 main,
 div[data-sidebar-wrapper] {
   padding-right: 0px !important;
@@ -146,14 +145,15 @@ div[data-sidebar-wrapper] {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
 
-  /* Radix UI Slider Styles */
   [data-radix-slider-root] {
     position: relative;
     display: flex;

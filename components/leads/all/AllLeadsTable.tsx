@@ -50,7 +50,7 @@ export default function AllLeadsTable() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 p-4">
       {/* Control Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-card p-4 border border-border rounded-xl shadow-sm">
         <div className="relative w-full sm:max-w-xs">
