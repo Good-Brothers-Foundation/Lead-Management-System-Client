@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, Eye } from "lucide-react";
 import LeadDetailDrawer from "../leads/all/LeadDetailSheet";
 import Image from "next/image";
-
+import { WhatsAppTemplateModal } from "../leads/all/sections/WhatsAppTemplateModal";
 
 interface FollowUpListProps {
   leads: LeadFormData[];
@@ -18,6 +18,10 @@ interface FollowUpListProps {
 
 export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpListProps) {
   const [selectedLead, setSelectedLead] = useState<LeadFormData | null>(null);
+
+  // WhatsApp Modal state
+  const [whatsappLead, setWhatsappLead] = useState<LeadFormData | null>(null);
+  const [isWhatsappOpen, setIsWhatsappOpen] = useState(false);
 
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
@@ -30,12 +34,9 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
     }
   };
 
-  const handleWhatsAppClick = (phone: string) => {
-    // Sanitize phone number to contain only numeric digits
-    const cleanedPhone = phone.replace(/\D/g, "");
-    if (cleanedPhone) {
-      window.open(`https://wa.me/${cleanedPhone}`, "_blank", "noopener,noreferrer");
-    }
+  const handleWhatsAppClick = (lead: LeadFormData) => {
+    setWhatsappLead(lead);
+    setIsWhatsappOpen(true);
   };
 
   if (leads.length === 0) {
@@ -63,7 +64,7 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
                     {lead.fullName}
                   </h4>
                   <p className="text-xs text-muted-foreground font-medium">
-                    {lead.company || "Individual Account"}
+                    {lead.category || "Individual Account"}
                   </p>
                 </div>
                 {lead.priority && (
@@ -108,7 +109,7 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => handleWhatsAppClick(lead.phone)}
+                  onClick={() => handleWhatsAppClick(lead)}
                   className="h-9 px-3 border-emerald-500/20 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 transition-colors cursor-pointer"
                   title="Contact via WhatsApp"
                 >
@@ -135,6 +136,13 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
           onUpdateLead(updatedData);
           setSelectedLead(updatedData);
         }}
+      />
+
+      {/* WhatsApp Template Selector Modal */}
+      <WhatsAppTemplateModal
+        lead={whatsappLead}
+        isOpen={isWhatsappOpen}
+        onClose={() => setIsWhatsappOpen(false)}
       />
     </>
   );

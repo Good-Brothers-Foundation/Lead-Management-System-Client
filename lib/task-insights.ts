@@ -26,7 +26,10 @@ export interface LeadTask {
 
 const getLeadKey = (lead: LeadFormData) => lead._id || lead.phone;
 
-const getPriority = (lead: LeadFormData, fallback: TaskPriority): TaskPriority => {
+const getPriority = (
+  lead: LeadFormData,
+  fallback: TaskPriority,
+): TaskPriority => {
   const priority = lead.priority?.toLowerCase();
 
   if (priority === "high" || priority === "medium" || priority === "low") {
@@ -44,7 +47,7 @@ const toFollowUpTask = (
   id: `${getLeadKey(lead)}-${label.toLowerCase().replace(/\s+/g, "-")}`,
   title: `${label}: ${lead.contactMethod ? formatLabel(lead.contactMethod) : "Contact"} ${lead.fullName}`,
   leadName: lead.fullName,
-  company: lead.company || "Individual Account",
+  company: lead.category || "Individual Account",
   dueDate: lead.followUpDate,
   dueTime: lead.followUpTime,
   owner: lead.assignedTo || "Unassigned",
@@ -70,7 +73,7 @@ export const getLeadTasks = (leads: LeadFormData[]): LeadTask[] => {
       id: `${getLeadKey(lead)}-assignment`,
       title: `Assign owner to ${lead.fullName}`,
       leadName: lead.fullName,
-      company: lead.company || "Individual Account",
+      company: lead.category || "Individual Account",
       owner: "Unassigned",
       status: "pending",
       priority: normalizeStatus(lead.status) === "new" ? "medium" : "low",
@@ -86,7 +89,7 @@ export const getLeadTasks = (leads: LeadFormData[]): LeadTask[] => {
       id: `${getLeadKey(lead)}-closure`,
       title: `Closed lead: ${lead.fullName}`,
       leadName: lead.fullName,
-      company: lead.company || "Individual Account",
+      company: lead.category || "Individual Account",
       dueDate: lead.updatedAt?.slice(0, 10),
       owner: lead.assignedTo || "Unassigned",
       status: "completed",

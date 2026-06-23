@@ -13,7 +13,10 @@ interface LeadInfoProps {
   onSelectChange: (field: string, value: string) => void;
 }
 
-export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoProps) {
+export default function LeadInfoSection({
+  formData,
+  onSelectChange,
+}: LeadInfoProps) {
   return (
     <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
       <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
@@ -22,11 +25,19 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
       <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label className="text-sm font-medium">Service Interested In</Label>
-          <Select onValueChange={(v) => onSelectChange("service", v)} value={formData.service}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("service", v)}
+            value={formData.service}
+          >
+            <SelectTrigger id="service" className="h-10 bg-card border-input">
               <SelectValue placeholder="Select Service" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
+              <SelectItem value="unidentified">UnIdentified</SelectItem>
               <SelectItem value="website">Website Development</SelectItem>
               <SelectItem value="ecommerce">E-Commerce Development</SelectItem>
               <SelectItem value="app">Mobile App Development</SelectItem>
@@ -38,11 +49,19 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Budget Range</Label>
-          <Select onValueChange={(v) => onSelectChange("budget", v)} value={formData.budget}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("budget", v)}
+            value={formData.budget}
+          >
+            <SelectTrigger id="budget" className="h-10 bg-card border-input">
               <SelectValue placeholder="Select Budget" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
+              <SelectItem value="unidentified">UnIdentified</SelectItem>
               <SelectItem value="under25">Under ₹25,000</SelectItem>
               <SelectItem value="25to50">₹25,000 - ₹50,000</SelectItem>
               <SelectItem value="50to100">₹50,000 - ₹1,00,000</SelectItem>
@@ -53,11 +72,19 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Project Timeline</Label>
-          <Select onValueChange={(v) => onSelectChange("timeline", v)} value={formData.timeline}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("timeline", v)}
+            value={formData.timeline}
+          >
+            <SelectTrigger id="timeline" className="h-10 bg-card border-input">
               <SelectValue placeholder="Select Timeline" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
+              <SelectItem value="unidentified">UnIdentified</SelectItem>
               <SelectItem value="1week">Within 1 Week</SelectItem>
               <SelectItem value="2weeks">Within 2 Weeks</SelectItem>
               <SelectItem value="1month">Within 1 Month</SelectItem>
@@ -69,11 +96,19 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
         {/* Required Field with Validation Anchor */}
         <div className="space-y-2 relative">
           <Label className="text-sm font-medium">Lead Source *</Label>
-          <Select onValueChange={(v) => onSelectChange("source", v)} value={formData.source}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("source", v)}
+            value={formData.source}
+          >
+            <SelectTrigger id="source" className="h-10 bg-card border-input">
               <SelectValue placeholder="Lead Source" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
+              <SelectItem value="google-maps">Google Maps</SelectItem>
               <SelectItem value="website">Website</SelectItem>
               <SelectItem value="instagram">Instagram</SelectItem>
               <SelectItem value="linkedin">LinkedIn</SelectItem>
@@ -92,11 +127,18 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
         {/* Required Field with Validation Anchor */}
         <div className="space-y-2 relative">
           <Label className="text-sm font-medium">Lead Status *</Label>
-          <Select onValueChange={(v) => onSelectChange("status", v)} value={formData.status}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("status", v)}
+            value={formData.status}
+          >
+            <SelectTrigger id="status" className="h-10 bg-card border-input">
               <SelectValue placeholder="Lead Status" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="contacted">Contacted</SelectItem>
               <SelectItem value="qualified">Qualified</SelectItem>
@@ -114,11 +156,22 @@ export default function LeadInfoSection({ formData, onSelectChange }: LeadInfoPr
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Assigned To</Label>
-          <Select onValueChange={(v) => onSelectChange("assignedTo", v)} value={formData.assignedTo}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <Select
+            onValueChange={(v) => onSelectChange("assignedTo", v)}
+            value={formData.assignedTo}
+          >
+            <SelectTrigger
+              id="assignedTo"
+              className="h-10 bg-card border-input"
+            >
               <SelectValue placeholder="Assign Lead" />
             </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-[--radix-select-trigger-width]"
+            >
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               <SelectItem value="mayank-kansal">Mayank Kansal</SelectItem>
               <SelectItem value="dipish-bisht">Dipish Bisht</SelectItem>
               <SelectItem value="dheeraj-patel">Dheeraj Patel</SelectItem>

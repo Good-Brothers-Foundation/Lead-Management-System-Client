@@ -32,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={cn(geistSans.variable, geistMono.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-screen w-screen overflow-x-hidden bg-background text-foreground antialiased"> 
+      <body className="min-h-screen w-full overflow-x-hidden bg-background text-foreground antialiased"> 
         <AuthProvider>
           <AuthGuard>
             {children}

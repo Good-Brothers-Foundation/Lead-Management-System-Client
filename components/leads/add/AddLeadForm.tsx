@@ -13,12 +13,24 @@ import StatusModal from "@/components/ui/StatusModal";
 import { leadsApi } from "@/lib/api/leads";
 import { LeadFormData, LeadPayload } from "@/lib/types/lead";
 
+// FIX: Initial state must mirror your Mongoose Schema and support UI expectations
 const emptyLeadForm: LeadFormData = {
   fullName: "",
   phone: "",
   alternatePhone: "",
-  email: "",
-  company: "",
+  emails: [], // FIX: Initialized as an array to prevent .join() runtime crashes
+  category: "", // FIX: Synced from 'company' to match your DB schema and UI layout
+  address: "",
+  website: "",
+  gmbLink: "",
+  rating: undefined,
+  socials: {
+    facebook: "",
+    instagram: "",
+    linkedin: "",
+    twitter: "",
+    youtube: "",
+  },
   service: "",
   budget: "",
   timeline: "",
@@ -33,8 +45,14 @@ const emptyLeadForm: LeadFormData = {
   notes: "",
 };
 
+// FIX: Sanitize and cast your types properly before hitting the server API
 const toLeadPayload = (lead: LeadFormData): LeadPayload => {
-  const payload = { ...lead };
+  const payload = {
+    ...lead,
+    // Cast rating string back to a float/number or undefined for Mongoose compliance
+    rating: lead.rating ? parseFloat(lead.rating.toString()) : undefined,
+  };
+
   delete payload._id;
   delete payload.createdAt;
   delete payload.updatedAt;
@@ -57,16 +75,36 @@ export default function AddLeadForm() {
     type: "success",
   });
 
+  // FIX: Intercept array fields and nested sub-objects (socials) safely
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
+    const { name, value } = e.target;
+
+    // Route social inputs cleanly into the nested state tree
+    if (
+      ["facebook", "instagram", "linkedin", "twitter", "youtube"].includes(name)
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        socials: {
+          ...prev.socials,
+          [name]: value,
+        },
+      }));
+      return;
+    }
+
+    // Intercept emails field to maintain array type state integrity
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]:
+        name === "emails"
+          ? value.split(",").map((email) => email.trimStart()) // Maintains array for .join() operations
+          : value,
     }));
   };
 
-  // Fixed signature to match keyof constraint of your modular components
   const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -77,7 +115,7 @@ export default function AddLeadForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       await leadsApi.create(toLeadPayload(formData));
 
@@ -85,7 +123,8 @@ export default function AddLeadForm() {
         isOpen: true,
         type: "success",
         title: "Lead Logged Successfully",
-        description: "The workflow assigned to this lead profile is now active.",
+        description:
+          "The workflow assigned to this lead profile is now active.",
       });
 
       setFormData(emptyLeadForm);
@@ -109,22 +148,29 @@ export default function AddLeadForm() {
       <Card className="max-w-7xl bg-card shadow-sm rounded-lg">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-10">
-            
             <PersonalInfoSection formData={formData} onChange={handleChange} />
-            
-            <LeadInfoSection formData={formData} onSelectChange={handleSelectChange} />
-            
-            <FollowUpSection formData={formData} onChange={handleChange} onSelectChange={handleSelectChange} />
-            
-            <AdditionalInfoSection formData={formData} onChange={handleChange} />
-            
-            <FormActions isSubmitting={isSubmitting} />
 
+            <LeadInfoSection
+              formData={formData}
+              onSelectChange={handleSelectChange}
+            />
+
+            <FollowUpSection
+              formData={formData}
+              onChange={handleChange}
+              onSelectChange={handleSelectChange}
+            />
+
+            <AdditionalInfoSection
+              formData={formData}
+              onChange={handleChange}
+            />
+
+            <FormActions isSubmitting={isSubmitting} />
           </form>
         </CardContent>
       </Card>
 
-      {/* Reusable, Centered Confirmation Popup Component Layout */}
       <StatusModal
         isOpen={modalState.isOpen}
         type={modalState.type}

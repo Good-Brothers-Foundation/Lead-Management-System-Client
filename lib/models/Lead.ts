@@ -2,13 +2,26 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface LeadDocument extends Document {
   fullName: string;
-  phone: string;
+  phone?: string;
+  emails?: string[];
+  address?: string;
+  category?: string;
+  alternatePhone?: string;
+
   source: string;
   status: string;
+  rating?: number;
 
-  alternatePhone?: string;
-  email?: string;
-  company?: string;
+  website?: string;
+  gmbLink?: string;
+  socials?: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+    youtube?: string;
+  };
+
   service?: string;
   budget?: string;
   timeline?: string;
@@ -26,93 +39,37 @@ export interface LeadDocument extends Document {
 
 const leadSchema: Schema<LeadDocument> = new Schema(
   {
-    fullName: {
-      type: String,
-      required: true,
-      trim: true,
+    fullName: { type: String, required: true, trim: true },
+    phone: { type: String, trim: true },
+    emails: [{ type: String, trim: true, lowercase: true }],
+    address: { type: String, trim: true },
+    category: { type: String, trim: true },
+    alternatePhone: { type: String, trim: true },
+
+    source: { type: String, required: true, trim: true },
+    status: { type: String, required: true, trim: true },
+    rating: { type: Number },
+
+    website: { type: String, trim: true },
+    gmbLink: { type: String, trim: true },
+    socials: {
+      facebook: { type: String, trim: true },
+      instagram: { type: String, trim: true },
+      linkedin: { type: String, trim: true },
+      twitter: { type: String, trim: true },
+      youtube: { type: String, trim: true },
     },
 
-    phone: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    source: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    status: {
-      type: String,
-      required: false,
-      trim: true,
-    },
-
-    alternatePhone: {
-      type: String,
-      trim: true,
-    },
-
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-    },
-
-    company: {
-      type: String,
-      trim: true,
-    },
-
-    service: {
-      type: String,
-      trim: true,
-    },
-
-    budget: {
-      type: String,
-      trim: true,
-    },
-
-    timeline: {
-      type: String,
-      trim: true,
-    },
-
-    assignedTo: {
-      type: String,
-      trim: true,
-    },
-
-    followUpDate: {
-      type: String,
-    },
-
-    followUpTime: {
-      type: String,
-    },
-
-    priority: {
-      type: String,
-      trim: true,
-    },
-
-    contactMethod: {
-      type: String,
-      trim: true,
-    },
-
-    requirements: {
-      type: String,
-      trim: true,
-    },
-
-    notes: {
-      type: String,
-      trim: true,
-    },
+    service: { type: String, trim: true },
+    budget: { type: String, trim: true },
+    timeline: { type: String, trim: true },
+    assignedTo: { type: String, trim: true },
+    followUpDate: { type: String },
+    followUpTime: { type: String },
+    priority: { type: String, trim: true },
+    contactMethod: { type: String, trim: true },
+    requirements: { type: String, trim: true },
+    notes: { type: String, trim: true },
   },
   {
     timestamps: true,

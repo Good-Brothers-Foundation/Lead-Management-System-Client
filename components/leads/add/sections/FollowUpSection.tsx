@@ -49,10 +49,11 @@ export default function FollowUpSection({ formData, onChange, onSelectChange }: 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Priority</Label>
           <Select onValueChange={(v) => onSelectChange("priority", v)} value={formData.priority}>
-            <SelectTrigger className="h-10 bg-card border-input">
+            <SelectTrigger id="priority" className="h-10 bg-card border-input">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">
+              <SelectItem value="unknown">Unknown</SelectItem>
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
@@ -64,7 +65,7 @@ export default function FollowUpSection({ formData, onChange, onSelectChange }: 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Contact Method</Label>
           <Select onValueChange={(v) => onSelectChange("contactMethod", v)} value={formData.contactMethod}>
-            <SelectTrigger className="h-10 bg-card border-input">
+          <SelectTrigger id="contactMethod" className="h-10 bg-card border-input">
               <SelectValue placeholder="Contact Method" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} className="w-[--radix-select-trigger-width]">

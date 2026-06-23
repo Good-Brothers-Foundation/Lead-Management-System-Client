@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "./config";
 
-type RequestOptions = Omit<RequestInit, "body"> & {
-  body?: unknown;
+type RequestOptions<B = object> = Omit<RequestInit, "body"> & {
+  body?: B;
 };
 
 export class ApiError extends Error {
@@ -14,9 +14,9 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(
+export async function apiRequest<T, B = object>(
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions<B> = {}
 ): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,

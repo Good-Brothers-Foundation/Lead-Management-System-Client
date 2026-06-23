@@ -23,7 +23,7 @@ export function FollowUpRow({ lead }: { lead: LeadFormData }) {
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="truncate max-w-[150px] font-medium text-foreground/75">
-            {lead.company || "Individual"}
+            {lead.category || "Individual"}
           </span>
           <span className="flex items-center gap-1">
             <Phone className="h-3 w-3 shrink-0" />

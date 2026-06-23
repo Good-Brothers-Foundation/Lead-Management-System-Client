@@ -22,6 +22,7 @@ export default function FormActions({ isSubmitting = false }: FormActionsProps) 
 
       <Button 
         type="submit" 
+        id="create-lead-btn"
         disabled={isSubmitting}
         className="h-11 px-6 font-medium text-white shadow-sm transition-colors rounded-md cursor-pointer"
         style={{

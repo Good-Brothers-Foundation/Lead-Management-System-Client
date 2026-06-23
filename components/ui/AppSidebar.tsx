@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ChevronDown,
-  LogOut,
-} from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 
 import {
   Sidebar,
@@ -28,22 +25,19 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useRouter } from "next/navigation";
 
 export function AppSidebar() {
-  const { logout, user } = useAuth()
-  const router = useRouter()
+  const { logout, user } = useAuth();
+  const router = useRouter();
 
   const handleLogout = () => {
-    logout()
-    router.push('/login')
-  }
+    logout();
+    router.push("/login");
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-red-100">
       {/* Header */}
       <SidebarHeader className="border-b p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-2"
-        >
+        <Link href="/" className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Image
               src="/logo.jpeg"
@@ -54,7 +48,6 @@ export function AppSidebar() {
             />
           </div>
         </Link>
-
       </SidebarHeader>
 
       {/* Content */}
@@ -73,11 +66,11 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
+                    id={menu.id}
                     tooltip={menu.title}
                     className="cursor-pointer"
                   >
                     <menu.icon className="h-4 w-4" />
-
                     <span>{menu.title}</span>
 
                     <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180 group-data-[collapsible=icon]:hidden" />
@@ -88,7 +81,8 @@ export function AppSidebar() {
                   <div className="ml-5 mt-1 border-l pl-3 group-data-[collapsible=icon]:hidden">
                     {menu.items.map((item) => (
                       <Link
-                        key={item.href}
+                        id={item?.id}
+                        key={item?.id}
                         href={item.href}
                         className="flex h-9 w-full items-center rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
@@ -121,7 +115,6 @@ export function AppSidebar() {
           </button>
         </div>
       </SidebarFooter>
-
     </Sidebar>
   );
 }

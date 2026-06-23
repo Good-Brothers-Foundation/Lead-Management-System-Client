@@ -1,13 +1,27 @@
 export interface LeadFormData {
   _id?: string;
+
   fullName: string;
   phone: string;
+  emails?: string[];
+  address?: string;
+  category?: string;
+  alternatePhone?: string;
+
   source: string;
   status: string;
+  rating?: number;
 
-  alternatePhone?: string;
-  email?: string;
-  company?: string;
+  website?: string;
+  gmbLink?: string;
+  socials?: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+    youtube?: string;
+  };
+  
   service?: string;
   budget?: string;
   timeline?: string;
