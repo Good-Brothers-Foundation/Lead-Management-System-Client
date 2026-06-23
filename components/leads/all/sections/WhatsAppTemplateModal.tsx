@@ -29,6 +29,18 @@ interface WhatsAppTemplateModalProps {
   onClose: () => void;
 }
 
+const safeDecode = (str: string) => {
+  try {
+    return decodeURIComponent(str);
+  } catch (e) {
+    return str;
+  }
+};
+
+const safeEncode = (str: string) => {
+  return encodeURIComponent(str);
+};
+
 export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplateModalProps) {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("custom");
@@ -48,11 +60,26 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
       const res = await fetch("/api/templates");
       const data = await res.json();
       if (data.success) {
-        setTemplates(data.data);
-        if (data.data.length > 0 && selectedTemplateId === "custom") {
-          // Select first template by default if available
-          setSelectedTemplateId(data.data[0]._id);
+        // Decode templates content
+        const decodedData = data.data.map((t: TemplateItem) => ({
+          ...t,
+          content: safeDecode(t.content)
+        }));
+        setTemplates(decodedData);
+        
+        // Auto-select template based on lead service if matching template exists
+        if (lead && lead.service) {
+          const matchingTemplate = decodedData.find((t: TemplateItem) => 
+            t.name.toLowerCase().includes(lead.service!.toLowerCase())
+          );
+          if (matchingTemplate) {
+            setSelectedTemplateId(matchingTemplate._id);
+            return;
+          }
         }
+        
+        // Default to custom message
+        setSelectedTemplateId("custom");
       }
     } catch (e) {
       console.error(e);
@@ -74,7 +101,21 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
     if (!lead) return;
 
     if (selectedTemplateId === "custom") {
-      setMessageText("");
+      let msg = `Hi ${lead.fullName || ""},\n\n`;
+      msg += `Hope you're doing well.\n\n`;
+      if (lead.service) {
+        msg += `I wanted to connect regarding your inquiry for ${lead.service.toUpperCase()}`;
+        if (lead.requirements && !lead.requirements.toLowerCase().includes("scraped")) {
+          msg += ` (${lead.requirements})`;
+        }
+        msg += `.\n\n`;
+      } else if (lead.requirements && !lead.requirements.toLowerCase().includes("scraped")) {
+        msg += `I wanted to connect regarding your requirements: "${lead.requirements}".\n\n`;
+      } else {
+        msg += `I wanted to reach out and connect with you.\n\n`;
+      }
+      msg += `Let me know when you're available for a quick chat.`;
+      setMessageText(msg);
       return;
     }
 
@@ -85,12 +126,36 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
         .replace(/\{\{phone\}\}/g, lead.phone || "")
         .replace(/\{\{service\}\}/g, lead.service || "")
         .replace(/\{\{assignedTo\}\}/g, lead.assignedTo || "")
-        .replace(/\{\{timeline\}\}/g, lead.timeline || "");
+        .replace(/\{\{timeline\}\}/g, lead.timeline || "")
+        .replace(/\{\{requirements\}\}/g, lead.requirements || "")
+        .replace(/\{\{notes\}\}/g, lead.notes || "");
       setMessageText(text);
     }
   }, [selectedTemplateId, lead, templates]);
 
   if (!lead) return null;
+
+  const insertVariable = (value: string) => {
+    const textarea = document.getElementById("msg-textarea") as HTMLTextAreaElement;
+    if (!textarea) {
+      setMessageText((prev) => prev + value);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+
+    setMessageText(before + value + after);
+    
+    // Put focus back and position cursor after inserted value
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + value.length;
+    }, 0);
+  };
 
   const handleSend = () => {
     let cleanedPhone = lead.phone.replace(/\D/g, "");
@@ -107,8 +172,18 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
       cleanedPhone = "91" + cleanedPhone;
     }
 
-    const encodedText = encodeURIComponent(messageText);
-    const url = `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encodedText}`;
+    // Replace placeholders in final text as well just in case they are present in custom messages
+    const finalMessageText = messageText
+      .replace(/\{\{leadName\}\}/g, lead.fullName || "")
+      .replace(/\{\{phone\}\}/g, lead.phone || "")
+      .replace(/\{\{service\}\}/g, lead.service || "")
+      .replace(/\{\{assignedTo\}\}/g, lead.assignedTo || "")
+      .replace(/\{\{timeline\}\}/g, lead.timeline || "")
+      .replace(/\{\{requirements\}\}/g, lead.requirements || "")
+      .replace(/\{\{notes\}\}/g, lead.notes || "");
+
+    const encodedText = encodeURIComponent(finalMessageText);
+    const url = `https://api.whatsapp.com/send/?phone=${cleanedPhone}&text=${encodedText}`;
     window.open(url, "_blank", "noopener,noreferrer");
     onClose();
   };
@@ -124,12 +199,16 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
         const res = await fetch(`/api/templates/${editingTemplate._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newTemplateName, content: newTemplateContent }),
+          body: JSON.stringify({ name: newTemplateName, content: safeEncode(newTemplateContent) }),
         });
         const data = await res.json();
         if (data.success) {
+          const decodedTemplate = {
+            ...data.data,
+            content: safeDecode(data.data.content)
+          };
           setTemplates((prev) =>
-            prev.map((t) => (t._id === editingTemplate._id ? data.data : t))
+            prev.map((t) => (t._id === editingTemplate._id ? decodedTemplate : t))
           );
           setEditingTemplate(null);
         }
@@ -138,11 +217,15 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
         const res = await fetch("/api/templates", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newTemplateName, content: newTemplateContent }),
+          body: JSON.stringify({ name: newTemplateName, content: safeEncode(newTemplateContent) }),
         });
         const data = await res.json();
         if (data.success) {
-          setTemplates((prev) => [data.data, ...prev]);
+          const decodedTemplate = {
+            ...data.data,
+            content: safeDecode(data.data.content)
+          };
+          setTemplates((prev) => [decodedTemplate, ...prev]);
         }
       }
       setNewTemplateName("");
@@ -336,8 +419,63 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
               </div>
 
               {/* Message Content Preview Area */}
-              <div className="space-y-1">
-                <Label htmlFor="msg-textarea" className="text-xs font-semibold">Message Text</Label>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="msg-textarea" className="text-xs font-semibold">Message Text</Label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-muted-foreground select-none">Insert:</span>
+                    <button
+                      type="button"
+                      onClick={() => insertVariable(lead.fullName || "")}
+                      className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                    >
+                      Name
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertVariable(lead.phone || "")}
+                      className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                    >
+                      Phone
+                    </button>
+                    {lead.service && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable(lead.service || "")}
+                        className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                      >
+                        Service
+                      </button>
+                    )}
+                    {lead.assignedTo && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable(lead.assignedTo || "")}
+                        className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                      >
+                        Owner
+                      </button>
+                    )}
+                    {lead.requirements && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable(lead.requirements || "")}
+                        className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                      >
+                        Requirements
+                      </button>
+                    )}
+                    {lead.notes && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable(lead.notes || "")}
+                        className="px-1.5 py-0.5 text-[9px] font-bold bg-muted hover:bg-muted-foreground/10 border border-border rounded cursor-pointer transition-all active:scale-95"
+                      >
+                        Notes
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <Textarea
                   id="msg-textarea"
                   value={messageText}
