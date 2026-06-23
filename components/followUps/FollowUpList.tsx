@@ -41,7 +41,7 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
 
   if (leads.length === 0) {
     return (
-      <div className="flex h-[250px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center bg-background/50">
+      <div className="flex h-62.5 flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center bg-background/50">
         <Calendar className="h-8 w-8 text-muted-foreground/50 mb-3" />
         <p className="text-sm font-medium text-muted-foreground">{emptyMessage}</p>
       </div>

@@ -95,7 +95,7 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: Le
             <Button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="h-10 gap-2 px-6 font-semibold text-white transition-colors rounded-md shrink-0 cursor-pointer bg-[var(--button-primary)] hover:opacity-90"
+              className="h-10 gap-2 px-6 font-semibold text-white transition-colors rounded-md shrink-0 cursor-pointer bg-(--button-primary)hover:opacity-90"
             >
               <Edit2 className="h-4 w-4" />
               Edit Record
@@ -138,7 +138,7 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: Le
                 <Button
                   type="submit"
                   disabled={isSaving}
-                  className="h-11 px-10 font-semibold text-white shadow-md transition-all cursor-pointer bg-[var(--button-secondary)] hover:opacity-90"
+                  className="h-11 px-10 font-semibold text-white shadow-md transition-all cursor-pointer bg-(--button-secondary) hover:opacity-90"
                 >
                   {isSaving ? "Updating..." : "Update Lead"}
                 </Button>

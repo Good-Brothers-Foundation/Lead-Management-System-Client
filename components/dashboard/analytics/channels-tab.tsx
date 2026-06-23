@@ -32,7 +32,7 @@ export function ChannelsTab({ totalLeads, statusData, sourceData, serviceData }:
     <div className="grid gap-8 lg:grid-cols-2">
       {/* Distribution Block */}
       <ChartCard title="Lead Status Distribution" description="Proportional breakdown of lead pipeline states">
-        <div className="relative flex justify-center items-center h-[300px]">
+        <div className="relative flex justify-center items-center h-75">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={statusData} cx="50%" cy="50%" innerRadius={75} outerRadius={95} paddingAngle={4} dataKey="value">
@@ -61,7 +61,7 @@ export function ChannelsTab({ totalLeads, statusData, sourceData, serviceData }:
 
       {/* Source Matrix */}
       <ChartCard title="Leads by Source" description="Top lead channels and marketing source performance">
-        <div className="h-[300px] w-full">
+        <div className="h-75 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={sourceData} layout="vertical" margin={{ left: -10, right: 10, top: 10, bottom: 0 }} barSize={14}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.6} />
@@ -80,7 +80,7 @@ export function ChannelsTab({ totalLeads, statusData, sourceData, serviceData }:
 
       <div className="lg:col-span-2">
         <ChartCard title="Service Demand" description="Lead requirements grouped by service offering requested">
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={serviceData} margin={{ left: -10, right: 10, top: 10, bottom: 0 }} barSize={28}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />

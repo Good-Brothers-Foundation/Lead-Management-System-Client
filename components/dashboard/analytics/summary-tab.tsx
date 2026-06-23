@@ -55,17 +55,13 @@ export function SummaryTab({ leads, metrics, trendData, funnelData, nextFollowUp
       {/* Analytical Visualization Core Grid */}
       <div className="grid gap-8 lg:grid-cols-1">
         <ChartCard title="Lead Pipeline Trend" description="Daily leads captured and conversions over time">
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorConversions" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
@@ -92,7 +88,7 @@ export function SummaryTab({ leads, metrics, trendData, funnelData, nextFollowUp
 
             return (
               <div key={item.stage} className="flex flex-col relative">
-                <div className={`p-6 rounded-2xl bg-gradient-to-br ${funnelColors[index]} text-white shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group hover:scale-[1.02] hover:shadow-md transition-all duration-300`}>
+                <div className={`p-6 rounded-2xl bg-linear-to-br ${funnelColors[index]} text-white shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group hover:scale-[1.02] hover:shadow-md transition-all duration-300`}>
                   <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:bg-white/20 transition-all duration-300" />
                   <div className="flex justify-between items-start">
                     <span className="text-sm font-semibold opacity-90 tracking-wide">{item.stage}</span>

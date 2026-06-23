@@ -54,7 +54,7 @@ export default function AnalyticsDashboard() {
 
   if (isLoading && !aggregatedData) {
     return (
-      <div className="w-full min-h-[500px] flex flex-col items-center justify-center space-y-4 py-20">
+      <div className="w-full min-h-125 flex flex-col items-center justify-center space-y-4 py-20">
         <RefreshCw className="h-9 w-9 text-[#fd6102] animate-spin" />
         <p className="text-sm font-bold text-muted-foreground animate-pulse">Aggregating live lead insights...</p>
       </div>
@@ -84,7 +84,7 @@ export default function AnalyticsDashboard() {
         {/* Core Page Heading Actions */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-6">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Analytics Dashboard</h1>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground bg-linear-to-r from-foreground to-foreground/70 bg-clip-text">Analytics Dashboard</h1>
             <p className="mt-2 text-base text-muted-foreground font-medium">Real-time insights into your lead pipeline, conversion rates, and team performance.</p>
           </div>
           <Button type="button" variant="outline" onClick={refetch} disabled={isLoading} className="h-11 px-5 gap-2 rounded-xl border-border/80 transition-all shadow-sm">

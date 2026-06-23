@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit2, Plus, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
+import { Trash2, Edit2, Plus, MessageSquare, ArrowLeft } from "lucide-react";
 import { LeadFormData } from "@/lib/types/lead";
 
 interface TemplateItem {
@@ -93,11 +93,22 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
   if (!lead) return null;
 
   const handleSend = () => {
-    const cleanedPhone = lead.phone.replace(/\D/g, "");
+    let cleanedPhone = lead.phone.replace(/\D/g, "");
     if (!cleanedPhone) return;
 
+    // Normalize local 10-digit, 0-prefixed 11-digit, or 910-prefixed 13-digit Indian phone numbers
+    if (cleanedPhone.startsWith("0") && cleanedPhone.length === 11) {
+      cleanedPhone = cleanedPhone.substring(1); // Slice the '0' from the front
+    } else if (cleanedPhone.startsWith("910") && cleanedPhone.length === 13) {
+      cleanedPhone = "91" + cleanedPhone.substring(3); // Slice the '0' after the '91' country code
+    }
+
+    if (cleanedPhone.length === 10) {
+      cleanedPhone = "91" + cleanedPhone;
+    }
+
     const encodedText = encodeURIComponent(messageText);
-    const url = `https://wa.me/${cleanedPhone}?text=${encodedText}`;
+    const url = `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encodedText}`;
     window.open(url, "_blank", "noopener,noreferrer");
     onClose();
   };
@@ -168,7 +179,7 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto bg-card border border-border">
+      <DialogContent className="sm:max-w-120 max-h-[90vh] overflow-y-auto bg-card border border-border">
         {isManaging ? (
           /* Templates Management Mode */
           <div className="space-y-4">
@@ -244,7 +255,7 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
                 <Button 
                   type="submit" 
                   disabled={isSavingTemplate}
-                  className="h-8 px-4 text-xs font-semibold text-white bg-[var(--button-secondary)] hover:opacity-90"
+                  className="h-8 px-4 text-xs font-semibold text-white bg-(--button-secondary) hover:opacity-90"
                 >
                   {isSavingTemplate ? "Saving..." : editingTemplate ? "Save Changes" : "Create"}
                 </Button>
@@ -252,7 +263,7 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
             </form>
 
             {/* List of saved templates */}
-            <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-45 overflow-y-auto pr-1">
               <span className="text-xs font-bold text-foreground">Saved Templates ({templates.length})</span>
               {templates.length > 0 ? (
                 templates.map((t) => (

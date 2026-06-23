@@ -40,7 +40,7 @@ export function LeadTableFilters({
             onClick={() => onStatusFilterChange(status)}
             className={`h-9 px-4 rounded-md text-xs font-semibold uppercase tracking-wider transition-all border cursor-pointer select-none
               ${statusFilter === status
-                ? "bg-[var(--button-secondary)] text-white border-transparent"
+                ? "bg-(--button-secondary)] text-white border-transparent"
                 : "bg-background text-muted-foreground border-border hover:bg-muted/50"
               }`}
           >

@@ -93,7 +93,7 @@ export function LeadTableRow({ lead, onViewDetails, onWhatsAppClick }: LeadTable
             size="icon"
             variant="ghost"
             onClick={() => onViewDetails(lead)}
-            className="h-8 w-8 text-muted-foreground hover:text-white rounded-md cursor-pointer transition-colors flex items-center justify-center hover:bg-[var(--button-primary)]"
+            className="h-8 w-8 text-muted-foreground hover:text-white rounded-md cursor-pointer transition-colors flex items-center justify-center hover:bg-(--button-primary)"
           >
             <Eye className="h-4 w-4" />
           </Button>
