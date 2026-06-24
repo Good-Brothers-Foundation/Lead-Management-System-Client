@@ -4,22 +4,23 @@ interface ChartCardProps {
   title: string;
   description?: string;
   children: React.ReactNode;
+  action?: React.ReactNode;
+  className?: string;
 }
 
-export function ChartCard({ title, description, children }: ChartCardProps) {
+export function ChartCard({ title, description, children, action, className = "" }: ChartCardProps) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.02)] transition-shadow duration-300">
-      <div className="mb-6 flex flex-col gap-1">
-        <h3 className="text-lg font-bold tracking-tight text-foreground">
-          {title}
-        </h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
+    <div className={`rounded-2xl border border-border bg-card shadow-sm overflow-hidden ${className}`}>
+      <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-border/50">
+        <div>
+          <h3 className="text-sm font-bold text-foreground">{title}</h3>
+          {description && (
+            <p className="mt-0.5 text-xs text-muted-foreground font-medium">{description}</p>
+          )}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
-      <div className="w-full">
-        {children}
-      </div>
+      <div className="p-6">{children}</div>
     </div>
   );
 }

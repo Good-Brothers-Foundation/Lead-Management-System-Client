@@ -44,7 +44,7 @@ export default function TasksDashboard() {
             {formatLabel(currentItem)} Tasks
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Work queue generated from lead follow-ups, ownership gaps, and closed records.
+            Work queue generated from lead follow-ups, assignment gaps, and closed records.
           </p>
         </div>
         <Button

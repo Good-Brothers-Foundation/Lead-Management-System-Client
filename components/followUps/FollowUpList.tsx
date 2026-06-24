@@ -16,7 +16,11 @@ interface FollowUpListProps {
   emptyMessage: string;
 }
 
-export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpListProps) {
+export function FollowUpList({
+  leads,
+  onUpdateLead,
+  emptyMessage,
+}: FollowUpListProps) {
   const [selectedLead, setSelectedLead] = useState<LeadFormData | null>(null);
 
   // WhatsApp Modal state
@@ -49,51 +53,71 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
   }
 
   return (
-    <>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="space-y-4">
+      {/* Grid List View Layout */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {leads.map((lead) => (
           <div
             key={lead._id}
-            className="group relative flex flex-col justify-between p-6 bg-card border border-border rounded-xl shadow-sm transition-all"
+            className="flex flex-col justify-between p-5 border border-border rounded-xl bg-card shadow-xs hover:shadow-sm transition-all"
           >
-            <div className="space-y-4">
-              {/* Header Info Block */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <h4 className="font-semibold text-foreground tracking-tight">
+            <div className="space-y-3 text-left">
+              {/* Header Info */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-bold text-foreground truncate max-w-[150px]">
                     {lead.fullName}
-                  </h4>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {lead.category || "Individual Account"}
+                  </h3>
+                  {lead.category && (
+                    <p className="text-[10px] font-semibold text-muted-foreground">
+                      {lead.category}
+                    </p>
+                  )}
+                </div>
+                <Badge
+                  className={`capitalize font-bold border px-2.5 py-0.5 rounded-full text-[10px] ${getPriorityColor(
+                    lead.priority
+                  )}`}
+                >
+                  {lead.priority || "Normal"} Priority
+                </Badge>
+              </div>
+
+              {/* Follow-up schedule times */}
+              <div className="space-y-1.5 pt-1 text-xs text-muted-foreground">
+                <p className="inline-flex items-center gap-1.5 font-medium">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground/75" />
+                  <span>
+                    Scheduled:{" "}
+                    {lead.followUpDate
+                      ? new Date(lead.followUpDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </span>
+                </p>
+                <p className="inline-flex items-center gap-1.5 font-medium">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground/75" />
+                  <span>Time: {lead.followUpTime || "—"}</span>
+                </p>
+                {lead.assignedTo && (
+                  <p className="inline-flex items-center gap-1.5 font-medium">
+                    <User className="h-3.5 w-3.5 text-muted-foreground/75" />
+                    <span className="capitalize">Owner: {lead.assignedTo}</span>
                   </p>
-                </div>
-                {lead.priority && (
-                  <Badge variant="outline" className={`capitalize font-semibold ${getPriorityColor(lead.priority)}`}>
-                    {lead.priority}
-                  </Badge>
                 )}
               </div>
+            </div>
 
-              {/* Meta Timestamps Layout */}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground/90 pt-2 border-t border-border/60">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span>{lead.followUpDate}</span>
-                </div>
-                {lead.followUpTime && (
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 shrink-0" />
-                    <span>{lead.followUpTime}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 shrink-0" />
-                  <span className="capitalize">{lead.assignedTo || "Unassigned"}</span>
-                </div>
-              </div>
+            {/* Render Bottom Row Interaction Area */}
+            <div className="border-t border-border/60 pt-4.5 mt-5 flex items-center justify-between gap-3">
+              <span className="text-[10px] font-bold text-[#fd6102] bg-[#fd6102]/5 border border-[#fd6102]/10 px-2 py-0.5 rounded">
+                {lead.service || "Unspecified"}
+              </span>
 
-              {/* Explicit Action Interface Layer */}
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -144,6 +168,6 @@ export function FollowUpList({ leads, onUpdateLead, emptyMessage }: FollowUpList
         isOpen={isWhatsappOpen}
         onClose={() => setIsWhatsappOpen(false)}
       />
-    </>
+    </div>
   );
 }

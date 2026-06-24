@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Template from "@/lib/models/Template";
+import { broadcast } from "@/lib/realtime";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -23,6 +24,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    broadcast("template_updated", template);
 
     return NextResponse.json({
       success: true,
@@ -53,6 +56,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    broadcast("template_deleted", { id });
 
     return NextResponse.json({
       success: true,

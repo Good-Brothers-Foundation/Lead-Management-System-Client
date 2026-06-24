@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -7,16 +10,106 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LeadFormData } from "@/lib/types/lead";
+import { membersApi } from "@/lib/api/team";
+import { Member } from "@/lib/types/team";
+import { useLeads } from "@/hooks/use-leads";
+import { formatLabel } from "@/lib/lead-insights";
 
 interface LeadInfoProps {
   formData: LeadFormData;
   onSelectChange: (field: string, value: string) => void;
 }
 
+const DEFAULT_SERVICES = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "website", label: "Website Development" },
+  { value: "ecommerce", label: "E-Commerce Development" },
+  { value: "app", label: "Mobile App Development" },
+  { value: "seo", label: "SEO" },
+  { value: "uiux", label: "UI/UX Design" }
+];
+
+const DEFAULT_BUDGETS = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "under25", label: "Under ₹25,000" },
+  { value: "25to50", label: "₹25,000 - ₹50,000" },
+  { value: "50to100", label: "₹50,000 - ₹1,00,000" },
+  { value: "100plus", label: "Above ₹1,00,000" }
+];
+
+const DEFAULT_TIMELINES = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "1week", label: "Within 1 Week" },
+  { value: "2weeks", label: "Within 2 Weeks" },
+  { value: "1month", label: "Within 1 Month" },
+  { value: "3months", label: "2-3 Months" }
+];
+
+const DEFAULT_SOURCES = [
+  { value: "google-maps", label: "Google Maps" },
+  { value: "website", label: "Website" },
+  { value: "instagram", label: "Instagram" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "referral", label: "Referral" }
+];
+
 export default function LeadInfoSection({
   formData,
   onSelectChange,
 }: LeadInfoProps) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const { services: dbServices = [], sources: dbSources = [], timelines: dbTimelines = [], budgets: dbBudgets = [] } = useLeads({ page: 1, limit: 1 });
+
+  useEffect(() => {
+    membersApi.getAll()
+      .then((data) => setMembers(data.filter((m) => m.status === "Active")))
+      .catch((err) => console.error("Error loading team members for lead add form:", err));
+  }, []);
+
+  const servicesList = useMemo(() => {
+    const list = [...DEFAULT_SERVICES];
+    dbServices.forEach((s) => {
+      const exists = list.some((item) => item.value === s || item.label.toLowerCase() === s.toLowerCase());
+      if (!exists && s.trim() !== "") {
+        list.push({ value: s, label: formatLabel(s) });
+      }
+    });
+    return list;
+  }, [dbServices]);
+
+  const budgetsList = useMemo(() => {
+    const list = [...DEFAULT_BUDGETS];
+    dbBudgets.forEach((b) => {
+      const exists = list.some((item) => item.value === b || item.label.toLowerCase() === b.toLowerCase());
+      if (!exists && b.trim() !== "") {
+        list.push({ value: b, label: formatLabel(b) });
+      }
+    });
+    return list;
+  }, [dbBudgets]);
+
+  const timelinesList = useMemo(() => {
+    const list = [...DEFAULT_TIMELINES];
+    dbTimelines.forEach((t) => {
+      const exists = list.some((item) => item.value === t || item.label.toLowerCase() === t.toLowerCase());
+      if (!exists && t.trim() !== "") {
+        list.push({ value: t, label: formatLabel(t) });
+      }
+    });
+    return list;
+  }, [dbTimelines]);
+
+  const sourcesList = useMemo(() => {
+    const list = [...DEFAULT_SOURCES];
+    dbSources.forEach((s) => {
+      const exists = list.some((item) => item.value === s || item.label.toLowerCase() === s.toLowerCase());
+      if (!exists && s.trim() !== "") {
+        list.push({ value: s, label: formatLabel(s) });
+      }
+    });
+    return list;
+  }, [dbSources]);
+
   return (
     <div className="p-6 border border-border rounded-xl bg-background/50 space-y-6">
       <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
@@ -37,12 +130,11 @@ export default function LeadInfoSection({
               sideOffset={4}
               className="w-[--radix-select-trigger-width]"
             >
-              <SelectItem value="unidentified">UnIdentified</SelectItem>
-              <SelectItem value="website">Website Development</SelectItem>
-              <SelectItem value="ecommerce">E-Commerce Development</SelectItem>
-              <SelectItem value="app">Mobile App Development</SelectItem>
-              <SelectItem value="seo">SEO</SelectItem>
-              <SelectItem value="uiux">UI/UX Design</SelectItem>
+              {servicesList.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -61,11 +153,11 @@ export default function LeadInfoSection({
               sideOffset={4}
               className="w-[--radix-select-trigger-width]"
             >
-              <SelectItem value="unidentified">UnIdentified</SelectItem>
-              <SelectItem value="under25">Under ₹25,000</SelectItem>
-              <SelectItem value="25to50">₹25,000 - ₹50,000</SelectItem>
-              <SelectItem value="50to100">₹50,000 - ₹1,00,000</SelectItem>
-              <SelectItem value="100plus">Above ₹1,0,000</SelectItem>
+              {budgetsList.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -84,11 +176,11 @@ export default function LeadInfoSection({
               sideOffset={4}
               className="w-[--radix-select-trigger-width]"
             >
-              <SelectItem value="unidentified">UnIdentified</SelectItem>
-              <SelectItem value="1week">Within 1 Week</SelectItem>
-              <SelectItem value="2weeks">Within 2 Weeks</SelectItem>
-              <SelectItem value="1month">Within 1 Month</SelectItem>
-              <SelectItem value="3months">2-3 Months</SelectItem>
+              {timelinesList.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -108,11 +200,11 @@ export default function LeadInfoSection({
               sideOffset={4}
               className="w-[--radix-select-trigger-width]"
             >
-              <SelectItem value="google-maps">Google Maps</SelectItem>
-              <SelectItem value="website">Website</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="linkedin">LinkedIn</SelectItem>
-              <SelectItem value="referral">Referral</SelectItem>
+              {sourcesList.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <input
@@ -143,6 +235,8 @@ export default function LeadInfoSection({
               <SelectItem value="contacted">Contacted</SelectItem>
               <SelectItem value="qualified">Qualified</SelectItem>
               <SelectItem value="proposal">Proposal Sent</SelectItem>
+              <SelectItem value="converted">Converted</SelectItem>
+              <SelectItem value="unqualified">Unqualified</SelectItem>
             </SelectContent>
           </Select>
           <input
@@ -172,12 +266,11 @@ export default function LeadInfoSection({
               className="w-[--radix-select-trigger-width]"
             >
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              <SelectItem value="mayank-kansal">Mayank Kansal</SelectItem>
-              <SelectItem value="dipish-bisht">Dipish Bisht</SelectItem>
-              <SelectItem value="dheeraj-patel">Dheeraj Patel</SelectItem>
-              <SelectItem value="vinay-suyal">Vinay Suyal</SelectItem>
-              <SelectItem value="ravi-negi">Ravi Negi</SelectItem>
-              <SelectItem value="rahul-rana">Rahul Rana</SelectItem>
+              {members.map((member) => (
+                <SelectItem key={member._id} value={member.name.toLowerCase().replace(/\s+/g, "-")}>
+                  {member.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

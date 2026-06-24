@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Notification from "@/lib/models/Notification";
+import { broadcast } from "@/lib/realtime";
 
 export async function GET() {
   try {
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const notification = await Notification.create(body);
+
+    broadcast("notification_created", notification);
 
     return NextResponse.json(
       {

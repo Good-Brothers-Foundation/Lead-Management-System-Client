@@ -3,6 +3,7 @@ import connectDB from "@/lib/db";
 import Lead from "@/lib/models/Lead";
 import Activity from "@/lib/models/Activity";
 import Notification from "@/lib/models/Notification";
+import { broadcast } from "@/lib/realtime";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -82,13 +83,18 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     // Log System Notification on major changes
     if (changes.length > 0) {
-      await Notification.create({
+      const notification = await Notification.create({
         title: "Lead Updated 📝",
         message: `${lead.fullName}: ${details}`,
         type: "lead_status_changed",
         link: "/leads/all",
       });
+      broadcast("notification_created", notification);
     }
+
+    // Broadcast lead update in real-time
+    broadcast("lead_updated", lead);
+
     return NextResponse.json({
       success: true,
       message: "Lead updated successfully",
@@ -110,7 +116,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     await connectDB();
     const { id } = await params;
-    const lead = await Lead.findByIdAndDelete(id);
+    const lead = await Lead.findByIdAndUpdate(
+      id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
 
     if (!lead) {
       return NextResponse.json(
@@ -120,12 +130,17 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     // Create system notification for lead deletion
-    await Notification.create({
+    const notification = await Notification.create({
       title: "Lead Removed ❌",
       message: `Lead ${lead.fullName} has been deleted from the pipeline`,
       type: "lead_status_changed",
       link: "/leads/all",
     });
+    broadcast("notification_created", notification);
+
+    // Broadcast lead deletion in real-time
+    broadcast("lead_deleted", { id });
+
     return NextResponse.json({
       success: true,
       message: "Lead deleted successfully",

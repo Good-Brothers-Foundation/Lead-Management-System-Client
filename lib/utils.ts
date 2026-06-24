@@ -36,7 +36,10 @@ export const getCountsByField = (
   field: "source" | "assignedTo" | "budget"
 ): Record<string, number> => {
   return leads.reduce<Record<string, number>>((counts, lead) => {
-    const value = lead[field]?.trim().toLowerCase() || "not specified";
+    let value = lead[field]?.trim().toLowerCase() || "not specified";
+    if (field === "source" && value === "google") {
+      value = "google-maps";
+    }
     counts[value] = (counts[value] || 0) + 1;
     return counts;
   }, {});

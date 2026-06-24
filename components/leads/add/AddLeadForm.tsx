@@ -81,15 +81,14 @@ export default function AddLeadForm() {
   ) => {
     const { name, value } = e.target;
 
-    // Route social inputs cleanly into the nested state tree
-    if (
-      ["facebook", "instagram", "linkedin", "twitter", "youtube"].includes(name)
-    ) {
+    // Route social inputs cleanly into the nested state tree (name is "socials.facebook" etc.)
+    if (name.startsWith("socials.")) {
+      const socialKey = name.split(".")[1];
       setFormData((prev) => ({
         ...prev,
         socials: {
           ...prev.socials,
-          [name]: value,
+          [socialKey]: value,
         },
       }));
       return;

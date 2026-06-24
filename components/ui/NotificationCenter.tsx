@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Bell, Check, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useRealtimeSubscription } from "@/components/providers/RealtimeProvider";
 
 interface NotificationItem {
   _id: string;
@@ -33,10 +34,21 @@ export function NotificationCenter() {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+
+    // Fallback polling at a reduced rate (every 60s)
+    const interval = setInterval(fetchNotifications, 60000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
+
+  useRealtimeSubscription("notification_created", (newNotification: NotificationItem) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n._id === newNotification._id)) return prev;
+      return [newNotification, ...prev];
+    });
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {

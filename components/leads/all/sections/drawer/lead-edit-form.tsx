@@ -1,9 +1,46 @@
-"use client";
-
+import { useState, useEffect, useMemo } from "react";
 import { LeadFormData } from "@/lib/types/lead";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FieldRenderer } from "./field-renderer";
+import { membersApi } from "@/lib/api/team";
+import { Member } from "@/lib/types/team";
+import { useLeads } from "@/hooks/use-leads";
+import { formatLabel } from "@/lib/lead-insights";
+
+const DEFAULT_SERVICES = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "website", label: "Website Development" },
+  { value: "ecommerce", label: "E-Commerce Development" },
+  { value: "app", label: "Mobile App Development" },
+  { value: "seo", label: "SEO & Marketing" },
+  { value: "custom-software", label: "Custom Software" }
+];
+
+const DEFAULT_BUDGETS = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "under25", label: "Under ₹25,000" },
+  { value: "25to50", label: "₹25,000 - ₹50,000" },
+  { value: "50to100", label: "₹50,000 - ₹1,00,000" },
+  { value: "100plus", label: "Above ₹1,00,000" }
+];
+
+const DEFAULT_TIMELINES = [
+  { value: "unidentified", label: "UnIdentified" },
+  { value: "1week", label: "Within 1 Week" },
+  { value: "2weeks", label: "Within 2 Weeks" },
+  { value: "1month", label: "Within 1 Month" },
+  { value: "flexible", label: "Flexible / Ongoing" }
+];
+
+const DEFAULT_SOURCES = [
+  { value: "website", label: "Website" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "google-maps", label: "Google Maps" },
+  { value: "whatsapp", label: "WhatsApp Inquiry" },
+  { value: "referral", label: "Referral" },
+  { value: "social-media", label: "Social Media" }
+];
 
 interface LeadEditFormProps {
   editData: LeadFormData;
@@ -12,6 +49,59 @@ interface LeadEditFormProps {
 }
 
 export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFormProps) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const { services: dbServices = [], sources: dbSources = [], timelines: dbTimelines = [], budgets: dbBudgets = [] } = useLeads({ page: 1, limit: 1 });
+
+  useEffect(() => {
+    membersApi.getAll()
+      .then((data) => setMembers(data.filter((m) => m.status === "Active")))
+      .catch((err) => console.error("Error loading team members for lead edit form:", err));
+  }, []);
+
+  const servicesList = useMemo(() => {
+    const list = [...DEFAULT_SERVICES];
+    dbServices.forEach((s) => {
+      const exists = list.some((item) => item.value === s || item.label.toLowerCase() === s.toLowerCase());
+      if (!exists && s.trim() !== "") {
+        list.push({ value: s, label: formatLabel(s) });
+      }
+    });
+    return list;
+  }, [dbServices]);
+
+  const budgetsList = useMemo(() => {
+    const list = [...DEFAULT_BUDGETS];
+    dbBudgets.forEach((b) => {
+      const exists = list.some((item) => item.value === b || item.label.toLowerCase() === b.toLowerCase());
+      if (!exists && b.trim() !== "") {
+        list.push({ value: b, label: formatLabel(b) });
+      }
+    });
+    return list;
+  }, [dbBudgets]);
+
+  const timelinesList = useMemo(() => {
+    const list = [...DEFAULT_TIMELINES];
+    dbTimelines.forEach((t) => {
+      const exists = list.some((item) => item.value === t || item.label.toLowerCase() === t.toLowerCase());
+      if (!exists && t.trim() !== "") {
+        list.push({ value: t, label: formatLabel(t) });
+      }
+    });
+    return list;
+  }, [dbTimelines]);
+
+  const sourcesList = useMemo(() => {
+    const list = [...DEFAULT_SOURCES];
+    dbSources.forEach((s) => {
+      const exists = list.some((item) => item.value === s || item.label.toLowerCase() === s.toLowerCase());
+      if (!exists && s.trim() !== "") {
+        list.push({ value: s, label: formatLabel(s) });
+      }
+    });
+    return list;
+  }, [dbSources]);
+
   return (
     <div className="space-y-8 sm:space-y-10 pb-6">
       
@@ -122,11 +212,11 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
               <Select onValueChange={(v) => onSelectChange("service", v)} value={editData.service}>
                 <SelectTrigger className="h-10 bg-card"><SelectValue placeholder="Select Service" /></SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="website">Website Development</SelectItem>
-                  <SelectItem value="ecommerce">E-Commerce Development</SelectItem>
-                  <SelectItem value="app">Mobile App Development</SelectItem>
-                  <SelectItem value="seo">SEO & Marketing</SelectItem>
-                  <SelectItem value="custom-software">Custom Software</SelectItem>
+                  {servicesList.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             }
@@ -142,10 +232,11 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
               <Select onValueChange={(v) => onSelectChange("budget", v)} value={editData.budget}>
                 <SelectTrigger className="h-10 bg-card"><SelectValue placeholder="Select Budget" /></SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="under25">Under ₹25,000</SelectItem>
-                  <SelectItem value="25to50">₹25,000 - ₹50,000</SelectItem>
-                  <SelectItem value="50to100">₹50,000 - ₹1,00,000</SelectItem>
-                  <SelectItem value="100plus">Above ₹1,00,000</SelectItem>
+                  {budgetsList.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             }
@@ -161,10 +252,11 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
               <Select onValueChange={(v) => onSelectChange("timeline", v)} value={editData.timeline}>
                 <SelectTrigger className="h-10 bg-card"><SelectValue placeholder="Select Timeline" /></SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="1week">Within 1 Week</SelectItem>
-                  <SelectItem value="2weeks">Within 2 Weeks</SelectItem>
-                  <SelectItem value="1month">Within 1 Month</SelectItem>
-                  <SelectItem value="flexible">Flexible / Ongoing</SelectItem>
+                  {timelinesList.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             }
@@ -180,12 +272,11 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
               <Select onValueChange={(v) => onSelectChange("source", v)} value={editData.source}>
                 <SelectTrigger className="h-10 bg-card"><SelectValue placeholder="Select Source" /></SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="website">Website</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="google">Google Maps</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp Inquiry</SelectItem>
-                  <SelectItem value="referral">Referral</SelectItem>
-                  <SelectItem value="social-media">Social Media</SelectItem>
+                  {sourcesList.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             }
@@ -203,8 +294,10 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
                 <SelectContent position="popper">
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="converted">Qualified</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
                   <SelectItem value="proposal">Proposal Sent</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                  <SelectItem value="unqualified">Unqualified</SelectItem>
                 </SelectContent>
               </Select>
             }
@@ -220,8 +313,11 @@ export function LeadEditForm({ editData, onChange, onSelectChange }: LeadEditFor
               <Select onValueChange={(v) => onSelectChange("assignedTo", v)} value={editData.assignedTo}>
                 <SelectTrigger className="h-10 bg-card"><SelectValue placeholder="Assign Owner" /></SelectTrigger>
                 <SelectContent position="popper">
-                  {["Mayank Kansal", "Dipish Bisht", "Dheeraj Patel", "Vinay Suyal", "Ravi Negi", "Rahul Rana"].map((user) => (
-                    <SelectItem key={user} value={user.toLowerCase().replace(" ", "-")}>{user}</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {members.map((member) => (
+                    <SelectItem key={member._id} value={member.name.toLowerCase().replace(/\s+/g, "-")}>
+                      {member.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Edit2, Plus, MessageSquare, ArrowLeft } from "lucide-react";
 import { LeadFormData } from "@/lib/types/lead";
+import { useRealtimeSubscription } from "@/components/providers/RealtimeProvider";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 interface TemplateItem {
   _id: string;
@@ -42,6 +44,7 @@ const safeEncode = (str: string) => {
 };
 
 export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplateModalProps) {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("custom");
   const [messageText, setMessageText] = useState("");
@@ -95,6 +98,35 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
       setEditingTemplate(null);
     }
   }, [isOpen]);
+
+  // Subscribe to real-time events via the unified provider
+  useRealtimeSubscription("template_created", (newTemplate: TemplateItem) => {
+    const decodedTemplate = {
+      ...newTemplate,
+      content: safeDecode(newTemplate.content)
+    };
+    setTemplates((prev) => {
+      if (prev.some((t) => t._id === decodedTemplate._id)) return prev;
+      return [decodedTemplate, ...prev];
+    });
+  });
+
+  useRealtimeSubscription("template_updated", (updatedTemplate: TemplateItem) => {
+    const decodedTemplate = {
+      ...updatedTemplate,
+      content: safeDecode(updatedTemplate.content)
+    };
+    setTemplates((prev) =>
+      prev.map((t) => (t._id === decodedTemplate._id ? decodedTemplate : t))
+    );
+  });
+
+  useRealtimeSubscription("template_deleted", ({ id }: { id: string }) => {
+    setTemplates((prev) => prev.filter((t) => t._id !== id));
+    if (selectedTemplateId === id) {
+      setSelectedTemplateId("custom");
+    }
+  });
 
   // Handle template selection and text substitution
   useEffect(() => {
@@ -157,7 +189,7 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
     }, 0);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     let cleanedPhone = lead.phone.replace(/\D/g, "");
     if (!cleanedPhone) return;
 
@@ -185,6 +217,26 @@ export function WhatsAppTemplateModal({ lead, isOpen, onClose }: WhatsAppTemplat
     const encodedText = encodeURIComponent(finalMessageText);
     const url = `https://api.whatsapp.com/send/?phone=${cleanedPhone}&text=${encodedText}`;
     window.open(url, "_blank", "noopener,noreferrer");
+
+    // Log WhatsApp Outreach Activity
+    try {
+      const templateName = selectedTemplateId === "custom" 
+        ? "Custom message" 
+        : (templates.find((t) => t._id === selectedTemplateId)?.name || "Outreach message");
+      
+      await fetch(`/api/leads/${lead._id}/activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "WhatsApp Outreach",
+          performedBy: user?.email || "System / Admin",
+          details: `Outreach template: "${templateName}"`,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log outreach activity:", err);
+    }
+
     onClose();
   };
 

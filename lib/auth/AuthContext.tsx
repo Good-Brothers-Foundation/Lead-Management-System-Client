@@ -19,52 +19,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
-        const storedAuth = localStorage.getItem('auth')
-        if (storedAuth) {
-          const authData = JSON.parse(storedAuth)
-          setUser(authData.user)
-          setIsAuthenticated(true)
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Error checking auth:', error)
+        console.error('Error checking auth:', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
   const login = async (email: string, password: string) => {
-    // Valid credentials
-    const VALID_EMAIL = 'bkdadmin@gmail.com'
-    const VALID_PASSWORD = 'bkdadmin@123'
-
     if (!email || !password) {
-      throw new Error('Email and password are required')
+      throw new Error('Email and password are required');
     }
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    // Validate credentials
-    if (email !== VALID_EMAIL || password !== VALID_PASSWORD) {
-      throw new Error('Invalid email or password')
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Invalid email or password');
     }
 
-    const userData = { email }
-    setUser(userData)
-    setIsAuthenticated(true)
-    localStorage.setItem('auth', JSON.stringify({ user: userData }))
-  }
+    setUser(data.user);
+    setIsAuthenticated(true);
+  };
 
-  const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem('auth')
-  }
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Failed to log out on server:', e);
+    }
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout, isLoading }}>

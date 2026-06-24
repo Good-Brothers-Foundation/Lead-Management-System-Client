@@ -6,6 +6,7 @@ import {
   ArrowLeft, 
   ArrowRight, 
   Trash2, 
+  Edit2,
   Calendar, 
   User, 
   CheckCircle2, 
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/table";
 import { Member, TeamTask } from "@/lib/types/team";
 import { membersApi, teamTasksApi } from "@/lib/api/team";
+import { useRealtimeSubscription } from "@/components/providers/RealtimeProvider";
 
 export default function TeamTasksPage() {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
@@ -67,7 +69,50 @@ export default function TeamTasksPage() {
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [status, setStatus] = useState<"backlog" | "pending" | "completed">("backlog");
   const [dueDate, setDueDate] = useState("");
+  // Edit task form state
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TeamTask | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editAssignedTo, setEditAssignedTo] = useState("");
+  const [editPriority, setEditPriority] = useState<"low" | "medium" | "high">("medium");
+  const [editStatus, setEditStatus] = useState<"backlog" | "pending" | "completed">("backlog");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Drag and Drop Board state
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeOverColumn, setActiveOverColumn] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData("taskId", id);
+    setActiveDragId(id);
+  };
+
+  const handleDragEnd = () => {
+    setActiveDragId(null);
+    setActiveOverColumn(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    setActiveOverColumn(columnId);
+  };
+
+  const handleDrop = async (e: React.DragEvent, columnId: "backlog" | "pending" | "completed") => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData("taskId");
+    setActiveOverColumn(null);
+    setActiveDragId(null);
+
+    if (!taskId) return;
+
+    const task = tasks.find((t) => t._id === taskId);
+    if (!task || task.status === columnId) return;
+
+    await handleMoveStatus(task, columnId);
+  };
 
   const fetchData = async (showLoading = false) => {
     if (showLoading) {
@@ -91,6 +136,103 @@ export default function TeamTasksPage() {
   useEffect(() => {
     fetchData(false);
   }, []);
+
+  // Subscribe to real-time events via the unified provider
+  useRealtimeSubscription("task_created", (newTask: TeamTask) => {
+    setTasks((prev) => {
+      if (prev.some((t) => t._id === newTask._id)) return prev;
+      return [newTask, ...prev];
+    });
+  });
+
+  useRealtimeSubscription("task_updated", (updatedTask: TeamTask) => {
+    setTasks((prev) =>
+      prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
+    );
+  });
+
+  useRealtimeSubscription("task_deleted", ({ id }: { id: string }) => {
+    setTasks((prev) =>
+      prev.map((t) => (t._id === id ? { ...t, isDeleted: true } : t))
+    );
+  });
+
+  useRealtimeSubscription("member_created", (newMember: Member) => {
+    setMembers((prev) => {
+      if (prev.some((m) => m._id === newMember._id)) return prev;
+      if (newMember.status !== "Active") return prev;
+      return [newMember, ...prev];
+    });
+  });
+
+  useRealtimeSubscription("member_updated", (updatedMember: Member) => {
+    setMembers((prev) => {
+      const exists = prev.some((m) => m._id === updatedMember._id);
+      if (updatedMember.status !== "Active") {
+        return prev.filter((m) => m._id !== updatedMember._id);
+      }
+      if (exists) {
+        return prev.map((m) => (m._id === updatedMember._id ? updatedMember : m));
+      } else {
+        return [updatedMember, ...prev];
+      }
+    });
+  });
+
+  useRealtimeSubscription("member_deleted", ({ id }: { id: string }) => {
+    setMembers((prev) => prev.filter((m) => m._id !== id));
+  });
+
+  const handleOpenAddForColumn = (colStatus: "backlog" | "pending" | "completed") => {
+    if (members.length === 0) {
+      alert("Please add at least one Active Team Member first before creating tasks!");
+      return;
+    }
+    setTitle("");
+    setDescription("");
+    setAssignedTo(members[0]?._id || "");
+    setPriority("medium");
+    setStatus(colStatus);
+    setDueDate("");
+    setIsAddOpen(true);
+  };
+
+  const handleOpenEdit = (task: TeamTask) => {
+    setSelectedTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+    const assigneeId = typeof task.assignedTo === "object" && task.assignedTo ? task.assignedTo._id : String(task.assignedTo);
+    setEditAssignedTo(assigneeId);
+    setEditPriority(task.priority);
+    setEditStatus(task.status);
+    setEditDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask || !editTitle.trim() || !editAssignedTo) return;
+
+    setIsEditSubmitting(true);
+    try {
+      const updated = await teamTasksApi.update(selectedTask._id, {
+        title: editTitle,
+        description: editDescription,
+        assignedTo: editAssignedTo,
+        priority: editPriority,
+        status: editStatus,
+        dueDate: editDueDate,
+      });
+      setTasks((prev) =>
+        prev.map((t) => (t._id === selectedTask._id ? updated : t))
+      );
+      setIsEditOpen(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update task");
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
 
   const handleOpenAdd = () => {
     if (members.length === 0) {
@@ -213,7 +355,15 @@ export default function TeamTasksPage() {
     const assigneeName = assignee ? assignee.name : "Unassigned";
 
     return (
-      <Card key={task._id} className="border border-border/80 bg-background shadow-sm hover:shadow-md transition-all duration-200 group">
+      <Card
+        key={task._id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, task._id)}
+        onDragEnd={handleDragEnd}
+        className={`border border-border/60 bg-background shadow-xs hover:shadow-md transition-all duration-200 group cursor-grab active:cursor-grabbing hover:-translate-y-0.5 rounded-xl
+          ${activeDragId === task._id ? "opacity-35 scale-95" : ""}
+        `}
+      >
         <CardContent className="p-4 space-y-3.5">
           <div className="flex items-start justify-between gap-2">
             <h4 className="font-semibold text-sm text-foreground leading-tight tracking-tight break-words flex-1 group-hover:text-[#fd6102] transition-colors">
@@ -247,15 +397,26 @@ export default function TeamTasksPage() {
           </div>
 
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleDelete(task._id)}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
-              title="Delete task"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => handleOpenEdit(task)}
+                className="h-8 w-8 text-muted-foreground hover:text-[#fd6102] hover:bg-[#fd6102]/10 rounded-md cursor-pointer border-none bg-transparent"
+                title="Edit task"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => handleDelete(task._id)}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer border-none bg-transparent"
+                title="Delete task"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             
             <div className="flex items-center gap-1">
               {task.status !== "backlog" && (
@@ -263,7 +424,7 @@ export default function TeamTasksPage() {
                   size="icon"
                   variant="ghost"
                   onClick={() => handleMoveStatus(task, task.status === "completed" ? "pending" : "backlog")}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-md cursor-pointer hover:bg-muted"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-md cursor-pointer hover:bg-muted border-none bg-transparent"
                   title="Move status back"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -274,7 +435,7 @@ export default function TeamTasksPage() {
                   size="icon"
                   variant="ghost"
                   onClick={() => handleMoveStatus(task, task.status === "backlog" ? "pending" : "completed")}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-md cursor-pointer hover:bg-muted"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-md cursor-pointer hover:bg-muted border-none bg-transparent"
                   title="Move status forward"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -397,13 +558,27 @@ export default function TeamTasksPage() {
                 {backlogTasks.length}
               </Badge>
             </div>
-            <div className="space-y-3.5 min-h-[300px] p-3 rounded-xl bg-muted/20 border border-border/40">
+            <div
+              onDragOver={(e) => handleDragOver(e, "backlog")}
+              onDrop={(e) => handleDrop(e, "backlog")}
+              className={`space-y-3.5 min-h-[450px] max-h-[500px] overflow-y-auto pr-1.5 p-4 rounded-2xl bg-muted/20 dark:bg-muted/5 border border-border/80 transition-all duration-200 scrollbar-thin
+                ${activeOverColumn === "backlog" ? "bg-muted/40 border-[var(--button-secondary)]/30 shadow-inner" : ""}
+              `}
+            >
               {backlogTasks.length > 0 ? (
                 backlogTasks.map(renderTaskCard)
               ) : (
-                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No tasks match filter.</p>
+                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No tasks match filter. Drag here.</p>
               )}
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => handleOpenAddForColumn("backlog")}
+              className="w-full h-10 gap-2 font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 justify-center rounded-xl border border-dashed border-border/80 mt-2 bg-transparent cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Task to Backlog
+            </Button>
           </div>
 
           {/* Pending / In-Progress Column */}
@@ -417,13 +592,27 @@ export default function TeamTasksPage() {
                 {pendingTasks.length}
               </Badge>
             </div>
-            <div className="space-y-3.5 min-h-[300px] p-3 rounded-xl bg-muted/20 border border-border/40">
+            <div
+              onDragOver={(e) => handleDragOver(e, "pending")}
+              onDrop={(e) => handleDrop(e, "pending")}
+              className={`space-y-3.5 min-h-[450px] max-h-[500px] overflow-y-auto pr-1.5 p-4 rounded-2xl bg-muted/20 dark:bg-muted/5 border border-border/80 transition-all duration-200 scrollbar-thin
+                ${activeOverColumn === "pending" ? "bg-muted/40 border-[var(--button-secondary)]/30 shadow-inner" : ""}
+              `}
+            >
               {pendingTasks.length > 0 ? (
                 pendingTasks.map(renderTaskCard)
               ) : (
-                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No pending tasks match filter.</p>
+                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No pending tasks match filter. Drag here.</p>
               )}
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => handleOpenAddForColumn("pending")}
+              className="w-full h-10 gap-2 font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 justify-center rounded-xl border border-dashed border-border/80 mt-2 bg-transparent cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Task to In-Progress
+            </Button>
           </div>
 
           {/* Completed Column */}
@@ -437,13 +626,27 @@ export default function TeamTasksPage() {
                 {completedTasks.length}
               </Badge>
             </div>
-            <div className="space-y-3.5 min-h-[300px] p-3 rounded-xl bg-muted/20 border border-border/40">
+            <div
+              onDragOver={(e) => handleDragOver(e, "completed")}
+              onDrop={(e) => handleDrop(e, "completed")}
+              className={`space-y-3.5 min-h-[450px] max-h-[500px] overflow-y-auto pr-1.5 p-4 rounded-2xl bg-muted/20 dark:bg-muted/5 border border-border/80 transition-all duration-200 scrollbar-thin
+                ${activeOverColumn === "completed" ? "bg-muted/40 border-[var(--button-secondary)]/30 shadow-inner" : ""}
+              `}
+            >
               {completedTasks.length > 0 ? (
                 completedTasks.map(renderTaskCard)
               ) : (
-                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No completed tasks match filter.</p>
+                <p className="py-12 text-center text-xs text-muted-foreground/75 italic">No completed tasks match filter. Drag here.</p>
               )}
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => handleOpenAddForColumn("completed")}
+              className="w-full h-10 gap-2 font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 justify-center rounded-xl border border-dashed border-border/80 mt-2 bg-transparent cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Task to Completed
+            </Button>
           </div>
 
         </div>
@@ -677,6 +880,107 @@ export default function TeamTasksPage() {
               </Button>
               <Button type="submit" disabled={isSubmitting} className="h-10 px-6 font-semibold text-white bg-[var(--button-secondary)] hover:opacity-90">
                 {isSubmitting ? "Creating..." : "Create Task"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[450px] bg-card border border-border">
+          <form onSubmit={handleEditSubmit}>
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-foreground">Edit Team Task</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Modify details of the selected team task.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-1">
+                <Label htmlFor="edit-task-title" className="text-sm font-semibold">Task Title *</Label>
+                <Input
+                  id="edit-task-title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="e.g. Design UI prototypes"
+                  required
+                  className="bg-muted/10 border-input h-10"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-task-desc" className="text-sm font-semibold">Description</Label>
+                <Textarea
+                  id="edit-task-desc"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Provide task specs, constraints, or instructions..."
+                  rows={3}
+                  className="bg-muted/10 border-input resize-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-task-assignee" className="text-sm font-semibold">Assignee *</Label>
+                <Select onValueChange={setEditAssignedTo} value={editAssignedTo}>
+                  <SelectTrigger className="h-10 bg-muted/10 border-input">
+                    <SelectValue placeholder="Select Assignee" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {members.map((member) => (
+                      <SelectItem key={member._id} value={member._id}>
+                        {member.name} ({member.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="edit-task-priority" className="text-sm font-semibold">Priority</Label>
+                  <Select onValueChange={(val) => setEditPriority(val as any)} value={editPriority}>
+                    <SelectTrigger className="h-10 bg-muted/10 border-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-task-status" className="text-sm font-semibold">Stage</Label>
+                  <Select onValueChange={(val) => setEditStatus(val as any)} value={editStatus}>
+                    <SelectTrigger className="h-10 bg-muted/10 border-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="backlog">Backlog</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-task-duedate" className="text-sm font-semibold">Due Date</Label>
+                <Input
+                  id="edit-task-duedate"
+                  type="date"
+                  value={editDueDate}
+                  onChange={(e) => setEditDueDate(e.target.value)}
+                  className="bg-muted/10 border-input h-10"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} disabled={isEditSubmitting} className="h-10 font-semibold cursor-pointer">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isEditSubmitting} className="h-10 px-6 font-semibold text-white bg-[var(--button-secondary)] hover:opacity-90">
+                {isEditSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

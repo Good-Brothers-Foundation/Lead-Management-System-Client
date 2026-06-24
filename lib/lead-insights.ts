@@ -48,9 +48,14 @@ export const sortByFollowUpDate = (leads: LeadFormData[]) =>
     return first.localeCompare(second);
   });
 
-export const formatLabel = (value: string) =>
-  value
+export const formatLabel = (value: string) => {
+  const lowercase = value.trim().toLowerCase();
+  if (lowercase === "google" || lowercase === "google-maps") {
+    return "Google Maps";
+  }
+  return value
     .split(/[\s_-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+};

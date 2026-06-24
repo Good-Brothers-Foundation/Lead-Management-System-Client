@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LeadFormData } from "@/lib/types/lead";
+import { useRealtimeSubscription } from "@/components/providers/RealtimeProvider";
+import { formatLabel } from "@/lib/lead-insights";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +20,30 @@ import {
   Loader2,
 } from "lucide-react";
 
+const getStatusBadgeStyles = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "new": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+    case "contacted": return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+    case "qualified": return "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+    case "proposal": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+    case "converted": return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    case "unqualified": return "bg-rose-500/10 text-rose-600 border-rose-500/20";
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "new": return "New";
+    case "contacted": return "Contacted";
+    case "qualified": return "Qualified";
+    case "proposal": return "Proposal Sent";
+    case "converted": return "Converted";
+    case "unqualified": return "Unqualified";
+    default: return status;
+  }
+};
+
 interface LeadDetailViewProps {
   lead: LeadFormData;
 }
@@ -26,7 +52,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
-  useEffect(() => {
+  const fetchActivities = useCallback(() => {
     if (!lead?._id) return;
     setLoadingActivities(true);
     fetch(`/api/leads/${lead._id}/activities`)
@@ -39,6 +65,17 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
       .catch((e) => console.error(e))
       .finally(() => setLoadingActivities(false));
   }, [lead?._id]);
+
+  useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
+
+  // Subscribe to real-time updates to refresh activities list instantly
+  useRealtimeSubscription("lead_updated", (updatedLead: any) => {
+    if (updatedLead?._id === lead?._id) {
+      fetchActivities();
+    }
+  });
 
   // Format dates for display
   const formatDate = (dateStr?: string) => {
@@ -83,8 +120,8 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
           )}
         </div>
         <div className="flex flex-wrap gap-2 md:self-center">
-          <Badge className="capitalize font-bold border px-3 py-1 rounded-md text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">
-            {lead.status || "new"}
+          <Badge className={`capitalize font-bold border px-3 py-1 rounded-md text-xs ${getStatusBadgeStyles(lead.status || "new")}`}>
+            {getStatusLabel(lead.status || "new")}
           </Badge>
           {lead.priority && (
             <Badge
@@ -135,7 +172,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
               </Label>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {lead.emails && lead.emails.length > 0 ? (
-                  lead.emails.map((email, idx) => (
+                  lead.emails.map((email: string, idx: number) => (
                     <a
                       key={idx}
                       href={`mailto:${email}`}
@@ -193,8 +230,8 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
               <Label className="text-xs font-medium text-muted-foreground">
                 Lead Source
               </Label>
-              <p className="text-sm font-semibold capitalize text-foreground">
-                {lead.source || "—"}
+              <p className="text-sm font-semibold text-foreground">
+                {lead.source ? formatLabel(lead.source) : "—"}
               </p>
             </div>
 

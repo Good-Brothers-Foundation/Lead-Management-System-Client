@@ -3,6 +3,7 @@ import connectDB from "@/lib/db";
 import Task from "@/lib/models/Task";
 import Member from "@/lib/models/Member"; // Pre-register Member model for population
 import Notification from "@/lib/models/Notification";
+import { broadcast } from "@/lib/realtime";
 
 export async function GET() {
   try {
@@ -46,12 +47,18 @@ export async function POST(req: NextRequest) {
     // Push system notification for task creation
     if (populatedTask) {
       const assigneeName = typeof populatedTask.assignedTo === "object" && populatedTask.assignedTo ? (populatedTask.assignedTo as any).name : "Unassigned";
-      await Notification.create({
+      const notification = await Notification.create({
         title: "Task Assigned 📋",
         message: `Task '${populatedTask.title}' assigned to ${assigneeName}`,
         type: "task_assigned",
         link: "/team/tasks",
       });
+      
+      // Broadcast events
+      broadcast("task_created", populatedTask);
+      if (notification) {
+        broadcast("notification_created", notification);
+      }
     }
 
     return NextResponse.json(

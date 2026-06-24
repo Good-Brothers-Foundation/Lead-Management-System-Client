@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Member from "@/lib/models/Member";
+import { broadcast } from "@/lib/realtime";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -44,6 +45,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    broadcast("member_updated", member);
+
     return NextResponse.json({
       success: true,
       message: "Member updated successfully",
@@ -73,6 +77,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    broadcast("member_deleted", { id });
+
     return NextResponse.json({
       success: true,
       message: "Member deleted successfully",

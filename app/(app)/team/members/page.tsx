@@ -40,11 +40,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Member } from "@/lib/types/team";
-import { membersApi } from "@/lib/api/team";
+import { Member, TeamTask } from "@/lib/types/team";
+import { membersApi, teamTasksApi } from "@/lib/api/team";
+import { useRealtimeSubscription } from "@/components/providers/RealtimeProvider";
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [tasks, setTasks] = useState<TeamTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,17 +62,21 @@ export default function MembersPage() {
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchMembers = async (showLoading = false) => {
+  const fetchMembersAndTasks = async (showLoading = false) => {
     if (showLoading) {
       setIsLoading(true);
       setError(null);
     }
     try {
-      const data = await membersApi.getAll();
-      setMembers(data);
+      const [membersData, tasksData] = await Promise.all([
+        membersApi.getAll(),
+        teamTasksApi.getAll().catch(() => []),
+      ]);
+      setMembers(membersData);
+      setTasks(tasksData);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load team members",
+        err instanceof Error ? err.message : "Failed to load team data",
       );
     } finally {
       setIsLoading(false);
@@ -78,8 +84,43 @@ export default function MembersPage() {
   };
 
   useEffect(() => {
-    fetchMembers(false);
+    fetchMembersAndTasks(true);
   }, []);
+
+  // Subscribe to real-time events via the unified provider
+  useRealtimeSubscription("member_created", (newMember: Member) => {
+    setMembers((prev) => {
+      if (prev.some((m) => m._id === newMember._id)) return prev;
+      return [newMember, ...prev];
+    });
+  });
+
+  useRealtimeSubscription("member_updated", (updatedMember: Member) => {
+    setMembers((prev) =>
+      prev.map((m) => (m._id === updatedMember._id ? updatedMember : m))
+    );
+  });
+
+  useRealtimeSubscription("member_deleted", ({ id }: { id: string }) => {
+    setMembers((prev) => prev.filter((m) => m._id !== id));
+  });
+
+  useRealtimeSubscription("task_created", (newTask: TeamTask) => {
+    setTasks((prev) => {
+      if (prev.some((t) => t._id === newTask._id)) return prev;
+      return [newTask, ...prev];
+    });
+  });
+
+  useRealtimeSubscription("task_updated", (updatedTask: TeamTask) => {
+    setTasks((prev) =>
+      prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
+    );
+  });
+
+  useRealtimeSubscription("task_deleted", ({ id }: { id: string }) => {
+    setTasks((prev) => prev.filter((t) => t._id !== id));
+  });
 
   const handleOpenAdd = () => {
     setName("");
@@ -214,12 +255,60 @@ export default function MembersPage() {
                 >
                   <TableCell className="font-semibold py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-muted/80 border border-border flex items-center justify-center text-[#fd6102] font-bold text-sm">
+                      <div className="h-8 w-8 rounded-full bg-muted/80 border border-border flex items-center justify-center text-[#fd6102] font-bold text-sm shrink-0">
                         {member.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-semibold text-foreground">
-                        {member.name}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-foreground">
+                          {member.name}
+                        </span>
+                        {(() => {
+                          const memberTasks = tasks.filter((t) => {
+                            const assigned = t.assignedTo;
+                            if (!assigned) return false;
+                            const assignedId = typeof assigned === "string" ? assigned : assigned._id;
+                            return assignedId === member._id && !t.isDeleted;
+                          });
+                          const backlogCount = memberTasks.filter((t) => t.status === "backlog").length;
+                          const pendingCount = memberTasks.filter((t) => t.status === "pending").length;
+                          const totalActive = backlogCount + pendingCount;
+
+                          return (
+                            <div className="flex items-center gap-2.5 mt-1 text-[10px] font-medium text-muted-foreground select-none">
+                              <span className="flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                {backlogCount} Backlog
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                                {pendingCount} Pending
+                              </span>
+                              {totalActive > 0 && (
+                                <div className="h-1 w-16 bg-muted/60 border border-border/60 rounded-full overflow-hidden flex shrink-0">
+                                  {backlogCount > 0 && (
+                                    <div
+                                      className="h-full bg-amber-500 transition-all duration-300"
+                                      style={{
+                                        width: `${(backlogCount / totalActive) * 100}%`,
+                                      }}
+                                      title={`${backlogCount} Backlog`}
+                                    />
+                                  )}
+                                  {pendingCount > 0 && (
+                                    <div
+                                      className="h-full bg-blue-500 transition-all duration-300"
+                                      style={{
+                                        width: `${(pendingCount / totalActive) * 100}%`,
+                                      }}
+                                      title={`${pendingCount} Pending`}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">

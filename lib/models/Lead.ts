@@ -33,6 +33,9 @@ export interface LeadDocument extends Document {
   requirements?: string;
   notes?: string;
 
+  isDeleted?: boolean;
+  deletedAt?: Date | null;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,11 +73,20 @@ const leadSchema: Schema<LeadDocument> = new Schema(
     contactMethod: { type: String, trim: true },
     requirements: { type: String, trim: true },
     notes: { type: String, trim: true },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
   },
 );
+
+// Define indexes for performance and rapid query times
+leadSchema.index({ fullName: "text", category: "text", address: "text", service: "text" });
+leadSchema.index({ status: 1 });
+leadSchema.index({ category: 1 });
+leadSchema.index({ gmbLink: 1 }, { unique: true, sparse: true });
+leadSchema.index({ phone: 1 });
 
 const Lead: Model<LeadDocument> =
   mongoose.models.Lead || mongoose.model<LeadDocument>("Lead", leadSchema);

@@ -2,7 +2,7 @@ export const STATUS_STYLES: Record<string, string> = {
   new: "border-blue-500/20 bg-blue-500/10 text-blue-600",
   contacted: "border-amber-500/20 bg-amber-500/10 text-amber-600",
   converted: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
-  qualified: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
+  qualified: "border-indigo-500/20 bg-indigo-500/10 text-indigo-600",
   proposal: "border-purple-500/20 bg-purple-500/10 text-purple-600",
 };
 

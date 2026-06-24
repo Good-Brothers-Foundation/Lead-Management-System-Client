@@ -7,6 +7,7 @@ import { LeadFormData } from "@/lib/types/lead";
 import { Edit2 } from "lucide-react";
 import { LeadEditForm } from "./sections/drawer/lead-edit-form";
 import { LeadDetailView } from "./sections/drawer/lead-detail-view";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 interface LeadDetailDrawerProps {
   lead: LeadFormData | null;
@@ -15,7 +16,13 @@ interface LeadDetailDrawerProps {
   onUpdate: (updatedLead: LeadFormData) => Promise<void> | void;
 }
 
-export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: LeadDetailDrawerProps) {
+export default function LeadDetailDrawer({
+  lead,
+  isOpen,
+  onClose,
+  onUpdate,
+}: LeadDetailDrawerProps) {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<LeadFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -86,8 +93,12 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: Le
             <DrawerTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               {isEditing ? "Modify Lead Details" : lead.fullName}
             </DrawerTitle>
-            <DrawerDescription className="text-sm text-muted-foreground">
-              {isEditing ? "Edit lead information below." : "View lead profile details."}
+            <DrawerDescription className="text-sm text-muted-foreground flex items-center">
+              {isEditing ? (
+                "Edit lead information below."
+              ) : (
+                "View lead profile details."
+              )}
             </DrawerDescription>
           </div>
 
@@ -95,7 +106,7 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: Le
             <Button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="h-10 gap-2 px-6 font-semibold text-white transition-colors rounded-md shrink-0 cursor-pointer bg-(--button-primary)hover:opacity-90"
+              className="h-10 gap-2 px-6 font-semibold text-white transition-colors rounded-md shrink-0 cursor-pointer bg-(--button-primary) hover:opacity-90"
             >
               <Edit2 className="h-4 w-4" />
               Edit Record
@@ -159,4 +170,4 @@ export default function LeadDetailDrawer({ lead, isOpen, onClose, onUpdate }: Le
       </DrawerContent>
     </Drawer>
   );
-}
+}

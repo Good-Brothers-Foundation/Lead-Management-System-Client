@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Member from "@/lib/models/Member";
+import { broadcast } from "@/lib/realtime";
 
 export async function GET() {
   try {
@@ -29,6 +30,8 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const member = await Member.create(body);
+
+    broadcast("member_created", member);
 
     return NextResponse.json(
       { success: true, message: "Member added successfully", data: member },

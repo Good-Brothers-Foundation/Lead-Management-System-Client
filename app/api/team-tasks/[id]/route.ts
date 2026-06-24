@@ -3,6 +3,7 @@ import connectDB from "@/lib/db";
 import Task from "@/lib/models/Task";
 import Member from "@/lib/models/Member"; // Pre-register Member model for population
 import Notification from "@/lib/models/Notification";
+import { broadcast } from "@/lib/realtime";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -70,14 +71,20 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       }
 
       if (changes.length > 0) {
-        await Notification.create({
+        const notification = await Notification.create({
           title: "Task Updated 📋",
           message: `Task '${task.title}': ${changes.join(", ")}`,
           type: "task_assigned",
           link: "/team/tasks",
         });
+        if (notification) {
+          broadcast("notification_created", notification);
+        }
       }
     }
+
+    broadcast("task_updated", task);
+
     return NextResponse.json({
       success: true,
       message: "Task updated successfully",
@@ -107,6 +114,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    broadcast("task_deleted", { id });
+
     return NextResponse.json({
       success: true,
       message: "Task deleted successfully",

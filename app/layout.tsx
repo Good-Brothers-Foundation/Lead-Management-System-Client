@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { AuthGuard } from "@/lib/auth/AuthGuard";
+import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body className="min-h-screen w-full overflow-x-hidden bg-background text-foreground antialiased"> 
         <AuthProvider>
           <AuthGuard>
-            {children}
+            <RealtimeProvider>
+              {children}
+            </RealtimeProvider>
           </AuthGuard>
         </AuthProvider>
       </body>

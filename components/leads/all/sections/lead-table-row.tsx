@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Phone, Mail, UserCheck, Eye } from "lucide-react";
+import { Phone, Mail, UserCheck, Eye, MapPin } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LeadFormData } from "@/lib/types/lead";
+import { formatLabel } from "@/lib/lead-insights";
 
 interface LeadTableRowProps {
   lead: LeadFormData;
@@ -16,8 +17,10 @@ const getStatusStyles = (status: string) => {
   switch (status) {
     case "new": return { bg: "bg-blue-500/10 text-blue-600 border-blue-500/20", label: "New" };
     case "contacted": return { bg: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Contacted" };
-    case "converted": return { bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Qualified" };
+    case "qualified": return { bg: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20", label: "Qualified" };
     case "proposal": return { bg: "bg-purple-500/10 text-purple-600 border-purple-500/20", label: "Proposal Sent" };
+    case "converted": return { bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Converted" };
+    case "unqualified": return { bg: "bg-rose-500/10 text-rose-600 border-rose-500/20", label: "Unqualified" };
     default: return { bg: "bg-muted text-muted-foreground", label: status };
   }
 };
@@ -34,8 +37,20 @@ export function LeadTableRow({ lead, onViewDetails, onWhatsAppClick }: LeadTable
       {/* Identity */}
       <TableCell className="font-medium py-3.5">
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-foreground tracking-tight">{lead.fullName}</span>
-          {lead.category && <span className="text-xs text-muted-foreground mt-0.5">{lead.category}</span>}
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-semibold text-foreground tracking-tight">{lead.fullName}</span>
+          </div>
+          <div className="flex flex-col gap-0.5 text-xs text-muted-foreground mt-0.5">
+            {lead.category && (
+              <span className="font-medium">Category: {lead.category}</span>
+            )}
+            {lead.address && (
+              <span className="inline-flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3 text-muted-foreground/75" />
+                <span>{lead.address}</span>
+              </span>
+            )}
+          </div>
         </div>
       </TableCell>
 
@@ -55,7 +70,7 @@ export function LeadTableRow({ lead, onViewDetails, onWhatsAppClick }: LeadTable
 
       {/* Core Fields */}
       <TableCell className="capitalize text-xs font-semibold text-foreground">{lead.service}</TableCell>
-      <TableCell className="capitalize text-xs text-muted-foreground font-medium">{lead.source}</TableCell>
+      <TableCell className="text-xs text-muted-foreground font-medium">{formatLabel(lead.source)}</TableCell>
 
       {/* Status Badge */}
       <TableCell>
