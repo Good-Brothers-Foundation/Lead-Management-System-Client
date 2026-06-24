@@ -123,7 +123,7 @@ export function NotificationCenter() {
           </div>
 
           {/* List */}
-          <div className="max-h-[300px] overflow-y-auto divide-y divide-border/60">
+          <div className="max-h-75 overflow-y-auto divide-y divide-border/60">
             {notifications.length > 0 ? (
               notifications.map((n) => (
                 <div
