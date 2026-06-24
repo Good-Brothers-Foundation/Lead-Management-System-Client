@@ -58,9 +58,9 @@ export function OperationsTab({
   return (
     <div className="space-y-8">
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        <MetricCard title="Assigned" value={assignedCount} detail={`${totalLeads - assignedCount} leads unassigned`} icon={UserCheck} bgColor="bg-cyan-500" />
-        <MetricCard title="Contacted" value={contactedCount} detail="Leads with at least one outreach" icon={PhoneCall} bgColor="bg-orange-500" />
-        <MetricCard title="Closed Opportunities" value={closedCount} detail="Qualified or converted sales targets" icon={CheckCircle2} bgColor="bg-lime-500" />
+        <MetricCard title="Assigned" value={assignedCount} detail={`${totalLeads - assignedCount} leads unassigned`} icon={UserCheck} accentColor="#06b6d4" />
+        <MetricCard title="Contacted" value={contactedCount} detail="Leads with at least one outreach" icon={PhoneCall} accentColor="#f97316" />
+        <MetricCard title="Closed Opportunities" value={closedCount} detail="Qualified or converted sales targets" icon={CheckCircle2} accentColor="#84cc16" />
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

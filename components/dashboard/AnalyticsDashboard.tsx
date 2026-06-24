@@ -252,7 +252,7 @@ export default function AnalyticsDashboard() {
                         <Cell key={i} fill={STATUS_COLORS[entry.status] || RECHARTS_PALETTE[i % RECHARTS_PALETTE.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(val: number) => [val, "Leads"]} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(val) => [val ?? 0, "Leads"]} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute flex flex-col items-center pointer-events-none">

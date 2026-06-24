@@ -46,10 +46,10 @@ export function SummaryTab({ leads, metrics, trendData, funnelData, nextFollowUp
     <>
       {/* Global Pipeline Statistics Overview */}
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total Leads" value={leads.length} detail="Leads in your pipeline" icon={Users} bgColor="bg-blue-500" />
-        <MetricCard title="Conversion Rate" value={`${metrics.conversionRate}%`} detail={`${metrics.closedCount} qualified / converted`} trend={metrics.conversionRate > 30 ? "↑ Strong performance" : "↓ Needs improvement"} icon={Target} bgColor="bg-emerald-500" />
-        <MetricCard title="Active Pipeline" value={metrics.activeCount} detail="Leads being worked on" icon={Activity} bgColor="bg-amber-500" />
-        <MetricCard title="Follow-ups Due" value={metrics.followUpLoad} detail={`${metrics.overdueCount} overdue, ${metrics.todayCount} today`} trend={metrics.overdueCount > 0 ? `⚠ ${metrics.overdueCount} overdue` : "✓ All current"} icon={Zap} bgColor={metrics.overdueCount > 0 ? "bg-red-500" : "bg-emerald-500"} />
+        <MetricCard title="Total Leads" value={leads.length} detail="Leads in your pipeline" icon={Users} accentColor="#3b82f6" />
+        <MetricCard title="Conversion Rate" value={`${metrics.conversionRate}%`} detail={`${metrics.closedCount} qualified / converted`} trend={metrics.conversionRate > 30 ? "↑ Strong performance" : "↓ Needs improvement"} icon={Target} accentColor="#10b981" />
+        <MetricCard title="Active Pipeline" value={metrics.activeCount} detail="Leads being worked on" icon={Activity} accentColor="#f59e0b" />
+        <MetricCard title="Follow-ups Due" value={metrics.followUpLoad} detail={`${metrics.overdueCount} overdue, ${metrics.todayCount} today`} trend={metrics.overdueCount > 0 ? `⚠ ${metrics.overdueCount} overdue` : "✓ All current"} icon={Zap} accentColor={metrics.overdueCount > 0 ? "#ef4444" : "#10b981"} />
       </div>
 
       {/* Analytical Visualization Core Grid */}
