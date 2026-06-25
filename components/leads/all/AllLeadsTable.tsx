@@ -205,17 +205,23 @@ export default function AllLeadsTable() {
             </div>
           )}
 
+          {/*
+            overflow-x-auto stays as a safety net for very small viewports;
+            table-fixed below is what actually stops columns from
+            expanding to fit their content.
+          */}
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed w-full">
               <TableHeader className="bg-muted/40">
                 <TableRow className="hover:bg-transparent border-b border-border">
-                  <TableHead className="font-bold text-foreground">Lead Identity</TableHead>
-                  <TableHead className="font-bold text-foreground">Contact Detail</TableHead>
-                  <TableHead className="font-bold text-foreground">Required Service</TableHead>
-                  <TableHead className="font-bold text-foreground">Source</TableHead>
-                  <TableHead className="font-bold text-foreground">Status Flag</TableHead>
-                  <TableHead className="font-bold text-foreground">Assigned To</TableHead>
-                  <TableHead className="text-right font-bold text-foreground">Action</TableHead>
+                  <TableHead className="font-bold text-foreground w-[20%]">Lead Identity</TableHead>
+                  <TableHead className="font-bold text-foreground w-[16%]">Contact Detail</TableHead>
+                  <TableHead className="font-bold text-foreground w-[14%]">Has Website</TableHead>
+                  <TableHead className="font-bold text-foreground w-[14%]">Required Service</TableHead>
+                  <TableHead className="font-bold text-foreground w-[12%]">Source</TableHead>
+                  <TableHead className="font-bold text-foreground w-[12%]">Status Flag</TableHead>
+                  <TableHead className="font-bold text-foreground w-[14%]">Assigned To</TableHead>
+                  <TableHead className="text-right font-bold text-foreground w-[10%]">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
