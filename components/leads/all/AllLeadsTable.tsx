@@ -216,7 +216,7 @@ export default function AllLeadsTable() {
                 <TableRow className="hover:bg-transparent border-b border-border">
                   <TableHead className="font-bold text-foreground w-[20%]">Lead Identity</TableHead>
                   <TableHead className="font-bold text-foreground w-[16%]">Contact Detail</TableHead>
-                  <TableHead className="font-bold text-foreground w-[14%]">Has Website</TableHead>
+                  <TableHead className="font-bold text-foreground w-[14%]">Has Services</TableHead>
                   <TableHead className="font-bold text-foreground w-[14%]">Required Service</TableHead>
                   <TableHead className="font-bold text-foreground w-[12%]">Source</TableHead>
                   <TableHead className="font-bold text-foreground w-[12%]">Status Flag</TableHead>

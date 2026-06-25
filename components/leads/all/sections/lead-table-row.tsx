@@ -1,7 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { Phone, Mail, UserCheck, Eye, MapPin } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  UserCheck,
+  Eye,
+  MapPin,
+  Globe,
+  Share2,
+  Camera,
+  Link as LinkIcon,
+  X as XIcon,
+  Video,
+  type LucideIcon,
+} from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LeadFormData } from "@/lib/types/lead";
@@ -50,19 +63,86 @@ const getStatusStyles = (status: string) => {
   }
 };
 
+type SocialKey = "facebook" | "instagram" | "linkedin" | "twitter" | "youtube";
+type ServiceMeta = {
+  key: "website" | SocialKey;
+  label: string;
+  icon: LucideIcon;
+  colorClass: string;
+  src: string;
+};
+
+const SERVICE_CONFIG: ServiceMeta[] = [
+  {
+    key: "website",
+    label: "Website",
+    icon: Globe,
+    colorClass: "text-sky-600 bg-sky-500/10 border-sky-500/20",
+    src: "/icons/globe.svg",
+  },
+  {
+    key: "facebook",
+    label: "Facebook",
+    icon: Share2,
+    colorClass: "text-blue-600 bg-blue-500/10 border-blue-500/20",
+    src: "/icons/facebook.svg",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    icon: Camera,
+    colorClass: "text-pink-600 bg-pink-500/10 border-pink-500/20",
+    src: "/icons/instagram.svg",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    icon: LinkIcon,
+    colorClass: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20",
+    src: "/icons/linkedin.svg",
+  },
+  {
+    key: "twitter",
+    label: "Twitter / X",
+    icon: XIcon,
+    colorClass: "text-slate-700 bg-slate-500/10 border-slate-500/20",
+    src: "/icons/twitter.svg",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    icon: Video,
+    colorClass: "text-red-600 bg-red-500/10 border-red-500/20",
+    src: "/icons/youtube.svg",
+  },
+];
+
+// Returns only the services that actually have a value on this lead.
+// website lives at the top level; the rest live under lead.socials.
+const getLeadServices = (lead: LeadFormData): ServiceMeta[] => {
+  return SERVICE_CONFIG.filter((svc) => {
+    const value =
+      svc.key === "website"
+        ? lead.website
+        : lead.socials?.[svc.key as keyof NonNullable<LeadFormData["socials"]>];
+    return typeof value === "string" && value.trim() !== "";
+  });
+};
+
 export function LeadTableRow({
   lead,
   onViewDetails,
   onWhatsAppClick,
 }: LeadTableRowProps) {
   const statusMeta = getStatusStyles(lead.status);
+  const leadServices = getLeadServices(lead);
 
   const handleWhatsAppRedirect = () => {
     onWhatsAppClick(lead);
   };
 
   return (
-    <TableRow className="border-b border-border hover:bg-muted/20 transition-colors">
+    <TableRow className="border-b border-border hover:bg-muted/20 transition-colors divide-x divide-border">
       {/* Identity — w-[20%] on the matching TableHead */}
       <TableCell className="font-medium py-3.5 w-[20%] overflow-hidden align-center">
         <div className="flex flex-col min-w-0">
@@ -103,19 +183,37 @@ export function LeadTableRow({
         </div>
       </TableCell>
 
-      {/* potential service */}
-      <TableCell className="capitalize text-xs font-semibold text-foreground w-[14%] truncate align-center">
-        {lead.website ? (
-          <span
-            className={`inline-flex items-center max-w-full px-2.5 py-0.5 rounded-full text-xs font-bold border bg-emerald-500/10 text-emerald-600 border-emerald-500/20`}
-          >
-            <span className="truncate">Yes</span>
-          </span>
+      {/* Services present (website / socials) */}
+      <TableCell className="w-[14%] overflow-hidden align-center">
+        {leadServices.length > 0 ? (
+          <div className="flex items-center gap-1 flex-wrap">
+            {leadServices.map((svc) => {
+              let href = svc.key ==  "website" ?  lead.website : lead.socials![svc.key];
+
+              if(href == "N/A"){
+                return;
+              }
+
+              return (
+                <a href={href}
+                  key={svc.key}
+                  title={svc.label}
+                  className={`inline-flex items-center justify-center h-6 w-6 rounded-full border shrink-0 ${svc.colorClass}`}
+                >
+                  <Image
+                    className="in-dark:invert"
+                    src={svc.src}
+                    alt="WhatsApp"
+                    width={14}
+                    height={14}
+                  />
+                </a>
+              );
+            })}
+          </div>
         ) : (
-          <span
-            className={`inline-flex items-center max-w-full px-2.5 py-0.5 rounded-full text-xs font-bold border bg-rose-500/10 text-rose-600 border-rose-500/20`}
-          >
-            <span className="truncate">No</span>
+          <span className="inline-flex items-center max-w-full px-2.5 py-0.5 rounded-full text-xs font-bold border bg-rose-500/10 text-rose-600 border-rose-500/20">
+            <span className="truncate">None</span>
           </span>
         )}
       </TableCell>
@@ -154,19 +252,21 @@ export function LeadTableRow({
       {/* Context Execution Actions — w-[12%] on the matching TableHead */}
       <TableCell className="text-right w-[10%] align-center">
         <div className="flex items-center justify-end gap-1 flex-wrap">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleWhatsAppRedirect}
-            className="h-8 w-8 text-muted-foreground hover:text-white rounded-md cursor-pointer transition-colors flex items-center justify-center hover:bg-green-500/10"
-          >
-            <Image
-              src="/icons/whatsapp.svg"
-              alt="WhatsApp"
-              width={14}
-              height={14}
-            />
-          </Button>
+          {lead.phone && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleWhatsAppRedirect}
+              className="h-8 w-8 text-muted-foreground hover:text-white rounded-md cursor-pointer transition-colors flex items-center justify-center hover:bg-green-500/10"
+            >
+              <Image
+                src="/icons/whatsapp.svg"
+                alt="WhatsApp"
+                width={14}
+                height={14}
+              />
+            </Button>
+          )}
 
           <Button
             size="icon"
