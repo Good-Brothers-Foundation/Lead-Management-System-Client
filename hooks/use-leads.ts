@@ -11,12 +11,16 @@ export interface UseLeadsOptions {
   status?: string;
   category?: string;
   search?: string;
+  service?: string;
+  assignee?: string;
 }
 
 export function useLeads(options?: UseLeadsOptions) {
   const [leads, setLeads] = useState<LeadFormData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [services, setServices] = useState<string[]>([]);
+  // assignees sourced from Lead.distinct("assignedTo") — exact strings stored in DB
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [sources, setSources] = useState<string[]>([]);
   const [timelines, setTimelines] = useState<string[]>([]);
   const [budgets, setBudgets] = useState<string[]>([]);
@@ -39,13 +43,17 @@ export function useLeads(options?: UseLeadsOptions) {
     try {
       const parsedOptions = optionsKey ? JSON.parse(optionsKey) : undefined;
       const res = await leadsApi.getAll(parsedOptions);
+
       setLeads(res.data);
       setCategories(res.categories || []);
       setServices(res.services || []);
+      // Use the assignees returned directly by the leads API (distinct assignedTo values from DB)
+      setAssignees(res.assignees || []);
       setSources(res.sources || []);
       setTimelines(res.timelines || []);
       setBudgets(res.budgets || []);
       setStatusCounts(res.statusCounts || {});
+
       if (res.pagination) {
         setPagination(res.pagination);
       } else {
@@ -112,6 +120,7 @@ export function useLeads(options?: UseLeadsOptions) {
     leads,
     categories,
     services,
+    assignees,
     sources,
     timelines,
     budgets,

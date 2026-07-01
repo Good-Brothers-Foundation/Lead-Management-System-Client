@@ -48,7 +48,8 @@ export const sortByFollowUpDate = (leads: LeadFormData[]) =>
     return first.localeCompare(second);
   });
 
-export const formatLabel = (value: string) => {
+export const formatLabel = (value?: string) => {
+  if (!value || typeof value !== "string") return "";
   const lowercase = value.trim().toLowerCase();
   if (lowercase === "google" || lowercase === "google-maps") {
     return "Google Maps";

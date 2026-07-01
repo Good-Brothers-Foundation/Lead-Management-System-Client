@@ -1,71 +1,251 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, List, LayoutGrid, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  RefreshCw,
+  List,
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
+  Phone,
+  Mail,
+  Eye,
+  MapPin,
+} from "lucide-react";
+import Image from "next/image";
 import { LeadFormData } from "@/lib/types/lead";
 import { useLeads } from "@/hooks/use-leads";
 import LeadDetailSheet from "./LeadDetailSheet";
 import { LeadTableFilters } from "./sections/lead-table-filters";
-import { LeadTableRow } from "./sections/lead-table-row";
+import {
+  LeadTableRow,
+  getStatusStyles,
+  getLeadServices,
+} from "./sections/lead-table-row";
 import { WhatsAppTemplateModal } from "./sections/WhatsAppTemplateModal";
 import { LeadKanbanBoard } from "./sections/LeadKanbanBoard";
+import { formatLabel } from "@/lib/lead-insights";
+
+// --- LEAD MOBILE CARD COMPONENT ---
+interface LeadMobileCardProps {
+  lead: LeadFormData;
+  onViewDetails: (lead: LeadFormData) => void;
+  onWhatsAppClick: (lead: LeadFormData) => void;
+}
+
+function LeadMobileCard({
+  lead,
+  onViewDetails,
+  onWhatsAppClick,
+}: LeadMobileCardProps) {
+  const statusMeta = getStatusStyles(lead.status);
+  const leadServices = getLeadServices(lead);
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-3.5 hover:border-border/60 transition-colors">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-sm text-foreground leading-snug break-words">
+            {lead.fullName}
+          </h3>
+          {lead.category && (
+            <span className="text-xs text-muted-foreground font-medium block mt-0.5">
+              {lead.category}
+            </span>
+          )}
+          {lead.address && (
+            <span className="inline-flex items-center gap-1.5 mt-1 text-xs text-muted-foreground max-w-full">
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{lead.address}</span>
+            </span>
+          )}
+        </div>
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${statusMeta.bg}`}
+        >
+          {statusMeta.label}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 text-xs border-y border-border/40 py-2.5">
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+            Service
+          </span>
+          <span className="font-semibold text-foreground truncate block capitalize">
+            {lead.service || "—"}
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+            Source
+          </span>
+          <span className="font-semibold text-foreground truncate block capitalize">
+            {lead.source ? formatLabel(lead.source) : "—"}
+          </span>
+        </div>
+        <div className="space-y-0.5 col-span-2">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+            Contact Info
+          </span>
+          <div className="flex flex-col gap-1 mt-1">
+            <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <Phone className="h-3 w-3 text-muted-foreground shrink-0" />
+              {lead.phone}
+            </span>
+            {lead.emails && lead.emails.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground max-w-full">
+                <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
+                <span className="truncate">{lead.emails[0]}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-1 flex-wrap">
+          {leadServices.length > 0 ? (
+            leadServices.map((svc) => {
+              let href =
+                svc.key === "website" ? lead.website : lead.socials![svc.key];
+              if (href === "N/A" || !href) return null;
+              return (
+                <a
+                  key={svc.key}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={svc.label}
+                  className={`inline-flex items-center justify-center h-6 w-6 rounded-full border shrink-0 ${svc.colorClass}`}
+                >
+                  <Image
+                    className="in-dark:invert"
+                    src={svc.src}
+                    alt={svc.label}
+                    width={12}
+                    height={12}
+                  />
+                </a>
+              );
+            })
+          ) : (
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              No socials present
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {lead.phone && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onWhatsAppClick(lead)}
+              className="h-8 gap-1.5 px-2.5 text-xs text-green-600 hover:text-green-700 hover:bg-green-500/10 cursor-pointer border-green-500/20"
+            >
+              <Image
+                src="/icons/whatsapp.svg"
+                alt="WhatsApp"
+                width={12}
+                height={12}
+              />
+              Chat
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={() => onViewDetails(lead)}
+            className="h-8 gap-1.5 px-2.5 text-xs text-white bg-(--button-primary) hover:opacity-90 cursor-pointer border-none"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            View
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN TABLE COMPONENT ---
+const CLIENT_PAGE_LIMIT = 20;
 
 export default function AllLeadsTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
-  // Pagination states
-  const [page, setPage] = useState(1);
-  const limit = 20;
+  // Client-side pagination page (operates on filteredLeads)
+  const [clientPage, setClientPage] = useState(1);
 
-  // Debounced search state to prevent server query spam
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setPage(1);
+      setClientPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setPage(1);
+    setClientPage(1);
   };
 
   const handleCategoryFilterChange = (category: string) => {
     setCategoryFilter(category);
-    setPage(1);
+    setClientPage(1);
   };
 
-  // Fetch leads with server-side pagination and filters
+  const handleServiceFilterChange = (service: string) => {
+    setServiceFilter(service);
+    setClientPage(1);
+  };
+
+  const handleAssigneeFilterChange = (assignee: string) => {
+    setAssigneeFilter(assignee);
+    setClientPage(1);
+  };
+
+  /**
+   * Pass ALL filters to the backend — the backend now applies them regardless
+   * of whether page/limit are present. Client-side filtering below acts as a
+   * safety net in case any filter value has a casing/trimming mismatch.
+   */
   const {
     leads = [],
     categories: hookCategories = [],
+    services: hookServices = [],
+    assignees: hookAssignees = [],
     statusCounts = {},
     isLoading,
     error,
     refetch,
     updateLead,
-    pagination,
   } = useLeads({
-    page,
-    limit,
+    // No page / limit — fetch ALL leads matching these filters
     status: statusFilter,
     category: categoryFilter,
     search: debouncedSearch,
+    service: serviceFilter === "all" ? undefined : serviceFilter,
+    assignee: assigneeFilter === "all" ? undefined : assigneeFilter,
   });
 
-  // Detail Sheet Local Context
   const [selectedLead, setSelectedLead] = useState<LeadFormData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  // WhatsApp Template Modal state
   const [whatsappLead, setWhatsappLead] = useState<LeadFormData | null>(null);
   const [isWhatsappOpen, setIsWhatsappOpen] = useState(false);
 
@@ -84,11 +264,10 @@ export default function AllLeadsTable() {
     if (savedLead) setSelectedLead(savedLead);
   };
 
-  // Dynamically extract unique categories from loaded leads list if not returned from hook
+  // --- Dynamic filter option lists ---
+
   const categories = useMemo(() => {
-    if (hookCategories && hookCategories.length > 0) {
-      return hookCategories;
-    }
+    if (hookCategories && hookCategories.length > 0) return hookCategories;
     const cats = new Set<string>();
     leads.forEach((lead) => {
       if (lead.category && lead.category.trim() !== "") {
@@ -98,77 +277,120 @@ export default function AllLeadsTable() {
     return Array.from(cats).sort();
   }, [leads, hookCategories]);
 
-  // Memoized query array parsing (fallback to client filtering only when pagination metadata is absent)
-  const filteredLeads = useMemo(() => {
-    if (pagination) {
-      return leads;
-    }
-    return leads.filter((lead) => {
-      const matchesSearch =
-        lead.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (lead.category && lead.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (lead.address && lead.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (lead.service && lead.service.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (lead.source && lead.source.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
-      
-      const matchesCategory = categoryFilter === "all" || (lead.category && lead.category.trim() === categoryFilter);
-
-      return matchesSearch && matchesStatus && matchesCategory;
+  // Dynamic services: prefer API-returned list, fall back to unique values from leads
+  const services = useMemo(() => {
+    if (hookServices && hookServices.length > 0) return hookServices;
+    const svcSet = new Set<string>();
+    leads.forEach((lead) => {
+      if (lead.service && lead.service.trim() !== "") {
+        svcSet.add(lead.service.trim());
+      }
     });
-  }, [leads, searchQuery, statusFilter, categoryFilter, pagination]);
+    return Array.from(svcSet).sort();
+  }, [leads, hookServices]);
 
-  const startItem = pagination && pagination.total > 0 ? (pagination.currentPage - 1) * pagination.limit + 1 : 0;
-  const endItem = pagination ? Math.min(pagination.currentPage * pagination.limit, pagination.total) : leads.length;
+  // Dynamic assignees: from Lead.distinct("assignedTo") via the API — exact strings stored in DB.
+  // Falls back to extracting unique assignedTo values from the current leads batch.
+  const assignees = useMemo(() => {
+    if (hookAssignees && hookAssignees.length > 0) return hookAssignees;
+    const asgSet = new Set<string>();
+    leads.forEach((lead) => {
+      if (lead.assignedTo && lead.assignedTo.trim() !== "") {
+        asgSet.add(lead.assignedTo.trim());
+      }
+    });
+    return Array.from(asgSet).sort();
+  }, [leads, hookAssignees]);
+
+  // --- Client-side filtering (safety net — backend should already filter, but this
+  // guarantees correctness even if there are casing mismatches or unsupported params)
+  const filteredLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      const matchesStatus =
+        statusFilter === "all" || lead.status === statusFilter;
+
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (lead.category &&
+          lead.category.trim().toLowerCase() === categoryFilter.trim().toLowerCase());
+
+      const matchesSearch =
+        !debouncedSearch ||
+        lead.fullName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (lead.category && lead.category.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (lead.address && lead.address.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (lead.service && lead.service.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (lead.phone && lead.phone.toLowerCase().includes(debouncedSearch.toLowerCase()));
+
+      const matchesService =
+        serviceFilter === "all" ||
+        (lead.service &&
+          lead.service.trim().toLowerCase() === serviceFilter.trim().toLowerCase());
+
+      const matchesAssignee =
+        assigneeFilter === "all" ||
+        (assigneeFilter === "unassigned" && !lead.assignedTo) ||
+        (lead.assignedTo &&
+          lead.assignedTo.trim().toLowerCase() === assigneeFilter.trim().toLowerCase());
+
+      return matchesStatus && matchesCategory && matchesSearch && matchesService && matchesAssignee;
+    });
+  }, [leads, statusFilter, categoryFilter, debouncedSearch, serviceFilter, assigneeFilter]);
+
+  // --- Client-side pagination on filteredLeads ---
+  const totalFiltered = filteredLeads.length;
+  const totalClientPages = Math.max(1, Math.ceil(totalFiltered / CLIENT_PAGE_LIMIT));
+
+  // Clamp clientPage if filteredLeads shrinks (e.g. after applying a new filter)
+  const safePage = Math.min(clientPage, totalClientPages);
+
+  const paginatedLeads = useMemo(() => {
+    const start = (safePage - 1) * CLIENT_PAGE_LIMIT;
+    return filteredLeads.slice(start, start + CLIENT_PAGE_LIMIT);
+  }, [filteredLeads, safePage]);
+
+  const startItem = totalFiltered > 0 ? (safePage - 1) * CLIENT_PAGE_LIMIT + 1 : 0;
+  const endItem = Math.min(safePage * CLIENT_PAGE_LIMIT, totalFiltered);
 
   const getPageNumbers = () => {
-    if (!pagination) return [];
-    const { currentPage, totalPages } = pagination;
     const pages: (number | string)[] = [];
-    
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
+    if (totalClientPages <= 5) {
+      for (let i = 1; i <= totalClientPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      
-      if (currentPage > 3) {
-        pages.push("...");
-      }
-      
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      
-      if (currentPage < totalPages - 2) {
-        pages.push("...");
-      }
-      
-      pages.push(totalPages);
+      if (safePage > 3) pages.push("...");
+      const start = Math.max(2, safePage - 1);
+      const end = Math.min(totalClientPages - 1, safePage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (safePage < totalClientPages - 2) pages.push("...");
+      pages.push(totalClientPages);
     }
     return pages;
   };
 
   return (
     <div className="w-full space-y-6 p-4">
-      {/* Control Input Area Component */}
       <LeadTableFilters
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+
         statusFilter={statusFilter}
         onStatusFilterChange={handleStatusFilterChange}
+        statusCounts={statusCounts}
+
         categoryFilter={categoryFilter}
         onCategoryFilterChange={handleCategoryFilterChange}
         categories={categories}
-        statusCounts={statusCounts}
+
+        serviceFilter={serviceFilter}
+        onServiceFilterChange={handleServiceFilterChange}
+        services={services}
+
+        assigneeFilter={assigneeFilter}
+        onAssigneeFilterChange={handleAssigneeFilterChange}
+        assignees={assignees}
       />
 
-      {/* View Mode Toggle Switch Row */}
       <div className="flex justify-end items-center gap-2">
         <Button
           type="button"
@@ -193,24 +415,29 @@ export default function AllLeadsTable() {
       </div>
 
       {viewMode === "table" ? (
-        /* Main Grid View Area Frame */
         <div className="border border-border bg-card rounded-xl shadow-sm overflow-hidden">
           {error && (
             <div className="flex items-center justify-between gap-4 border-b border-border bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              <span>{typeof error === "string" ? error : "An error occurred fetching leads."}</span>
-              <Button type="button" variant="outline" size="sm" onClick={refetch} className="gap-2">
+              <span>
+                {typeof error === "string"
+                  ? error
+                  : "An error occurred fetching leads."}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={refetch}
+                className="gap-2"
+              >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Retry
               </Button>
             </div>
           )}
 
-          {/*
-            overflow-x-auto stays as a safety net for very small viewports;
-            table-fixed below is what actually stops columns from
-            expanding to fit their content.
-          */}
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <Table className="table-fixed w-full">
               <TableHeader className="bg-muted/40">
                 <TableRow className="hover:bg-transparent border-b border-border">
@@ -227,26 +454,26 @@ export default function AllLeadsTable() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                       Loading leads...
                     </TableCell>
                   </TableRow>
-                ) : filteredLeads.length > 0 ? (
-                  filteredLeads.map((lead, idx) => {
+                ) : paginatedLeads.length > 0 ? (
+                  paginatedLeads.map((lead, idx) => {
                     const leadId = lead._id || "";
                     return (
                       <LeadTableRow
-                        key={leadId || idx} 
-                        lead={lead} 
-                        onViewDetails={handleOpenDetails} 
+                        key={leadId || idx}
+                        lead={lead}
+                        onViewDetails={handleOpenDetails}
                         onWhatsAppClick={handleOpenWhatsApp}
                       />
                     );
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                      No active leads match constraints.
+                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                      No leads match the selected filters.
                     </TableCell>
                   </TableRow>
                 )}
@@ -254,13 +481,39 @@ export default function AllLeadsTable() {
             </Table>
           </div>
 
-          {/* Pagination Controls */}
-          {pagination && pagination.totalPages > 1 && (
+          {/* Mobile cards */}
+          <div className="md:hidden p-4 space-y-4 max-h-[65vh] overflow-y-auto bg-muted/5">
+            {isLoading ? (
+              <div className="text-center text-xs text-muted-foreground py-10">
+                Loading leads...
+              </div>
+            ) : paginatedLeads.length > 0 ? (
+              paginatedLeads.map((lead, idx) => (
+                <LeadMobileCard
+                  key={lead._id || idx}
+                  lead={lead}
+                  onViewDetails={handleOpenDetails}
+                  onWhatsAppClick={handleOpenWhatsApp}
+                />
+              ))
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-10">
+                No leads match the selected filters.
+              </div>
+            )}
+          </div>
+
+          {/* Pagination — always based on filteredLeads count */}
+          {totalClientPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border bg-muted/20 px-6 py-4">
               <p className="text-xs text-muted-foreground font-medium">
-                Showing <span className="font-bold text-foreground">{startItem}</span> to{" "}
-                <span className="font-bold text-foreground">{endItem}</span> of{" "}
-                <span className="font-bold text-foreground">{pagination.total}</span> leads
+                Showing{" "}
+                <span className="font-bold text-foreground">{startItem}</span>{" "}
+                to{" "}
+                <span className="font-bold text-foreground">{endItem}</span>{" "}
+                of{" "}
+                <span className="font-bold text-foreground">{totalFiltered}</span>{" "}
+                leads
               </p>
               <div className="flex items-center gap-1.5">
                 <Button
@@ -268,8 +521,8 @@ export default function AllLeadsTable() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-lg cursor-pointer border-border hover:bg-muted/80 disabled:opacity-50"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
+                  onClick={() => setClientPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -277,7 +530,10 @@ export default function AllLeadsTable() {
                 {getPageNumbers().map((pageNum, index) => {
                   if (pageNum === "...") {
                     return (
-                      <span key={`ellipsis-${index}`} className="px-2 text-xs text-muted-foreground font-medium select-none">
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-2 text-xs text-muted-foreground font-medium select-none"
+                      >
                         ...
                       </span>
                     );
@@ -286,10 +542,10 @@ export default function AllLeadsTable() {
                     <Button
                       key={`page-${pageNum}`}
                       type="button"
-                      variant={page === pageNum ? "secondary" : "outline"}
+                      variant={safePage === pageNum ? "secondary" : "outline"}
                       className={`h-8 w-8 text-xs font-bold rounded-lg cursor-pointer border-border
-                        ${page === pageNum ? "bg-(--button-secondary) text-white hover:bg-(--button-secondary)/90" : "hover:bg-muted/80"}`}
-                      onClick={() => setPage(pageNum as number)}
+                        ${safePage === pageNum ? "bg-(--button-secondary) text-white hover:bg-(--button-secondary)/90" : "hover:bg-muted/80"}`}
+                      onClick={() => setClientPage(pageNum as number)}
                     >
                       {pageNum}
                     </Button>
@@ -301,8 +557,8 @@ export default function AllLeadsTable() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-lg cursor-pointer border-border hover:bg-muted/80 disabled:opacity-50"
-                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  disabled={page === pagination.totalPages}
+                  onClick={() => setClientPage((p) => Math.min(totalClientPages, p + 1))}
+                  disabled={safePage === totalClientPages}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -318,7 +574,6 @@ export default function AllLeadsTable() {
         />
       )}
 
-      {/* Target Record Mutator Drawer context */}
       <LeadDetailSheet
         lead={selectedLead}
         isOpen={isSheetOpen}
@@ -326,7 +581,6 @@ export default function AllLeadsTable() {
         onUpdate={handleUpdateLeadRecord}
       />
 
-      {/* WhatsApp Template Selector Modal */}
       <WhatsAppTemplateModal
         lead={whatsappLead}
         isOpen={isWhatsappOpen}

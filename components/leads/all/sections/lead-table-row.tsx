@@ -7,6 +7,7 @@ import {
   UserCheck,
   Eye,
   MapPin,
+  Clock,
   Globe,
   Share2,
   Camera,
@@ -19,6 +20,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LeadFormData } from "@/lib/types/lead";
 import { formatLabel } from "@/lib/lead-insights";
+import { timeAgo } from "@/lib/utils";
 
 interface LeadTableRowProps {
   lead: LeadFormData;
@@ -26,7 +28,7 @@ interface LeadTableRowProps {
   onWhatsAppClick: (lead: LeadFormData) => void;
 }
 
-const getStatusStyles = (status: string) => {
+export const getStatusStyles = (status: string) => {
   switch (status) {
     case "new":
       return {
@@ -63,8 +65,8 @@ const getStatusStyles = (status: string) => {
   }
 };
 
-type SocialKey = "facebook" | "instagram" | "linkedin" | "twitter" | "youtube";
-type ServiceMeta = {
+export type SocialKey = "facebook" | "instagram" | "linkedin" | "twitter" | "youtube";
+export type ServiceMeta = {
   key: "website" | SocialKey;
   label: string;
   icon: LucideIcon;
@@ -72,7 +74,7 @@ type ServiceMeta = {
   src: string;
 };
 
-const SERVICE_CONFIG: ServiceMeta[] = [
+export const SERVICE_CONFIG: ServiceMeta[] = [
   {
     key: "website",
     label: "Website",
@@ -119,7 +121,7 @@ const SERVICE_CONFIG: ServiceMeta[] = [
 
 // Returns only the services that actually have a value on this lead.
 // website lives at the top level; the rest live under lead.socials.
-const getLeadServices = (lead: LeadFormData): ServiceMeta[] => {
+export const getLeadServices = (lead: LeadFormData): ServiceMeta[] => {
   return SERVICE_CONFIG.filter((svc) => {
     const value =
       svc.key === "website"
@@ -161,6 +163,20 @@ export function LeadTableRow({
               <span className="inline-flex items-center gap-1 mt-0.5 min-w-0">
                 <MapPin className="h-3 w-3 text-muted-foreground/75 shrink-0" />
                 <span className="truncate">{lead.address}</span>
+              </span>
+            )}
+            {lead.createdAt && (
+              <span
+                className="inline-flex items-center gap-1 mt-1"
+                title={new Date(lead.createdAt).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              >
+                <Clock className="h-2.5 w-2.5 text-muted-foreground/60 shrink-0" />
+                <span className="text-[10px] text-muted-foreground/70 font-medium">
+                  {timeAgo(lead.createdAt)}
+                </span>
               </span>
             )}
           </div>

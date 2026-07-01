@@ -16,7 +16,7 @@ export default function PersonalInfoSection({
       {/* Core Personal Info */}
       <div className="space-y-6">
         <h3 className="text-md font-semibold tracking-wide uppercase text-muted-foreground/80 border-b border-border pb-2">
-          Personal Information
+          Personal Informationx
         </h3>
         <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
           <div className="space-y-2">

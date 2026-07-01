@@ -8,75 +8,130 @@ import { broadcast } from "@/lib/realtime";
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    
+
     const { searchParams } = new URL(req.url);
+
+    // Read all filter params
     const pageStr = searchParams.get("page");
     const limitStr = searchParams.get("limit");
+    const status = searchParams.get("status");
+    const category = searchParams.get("category");
+    const search = searchParams.get("search");
+    const service = searchParams.get("service");
+    const assignee = searchParams.get("assignee");
 
-    if (pageStr || limitStr) {
-      const page = parseInt(pageStr || "1");
-      const limit = parseInt(limitStr || "20");
-      const status = searchParams.get("status");
-      const category = searchParams.get("category");
-      const search = searchParams.get("search");
+    // Build the MongoDB query — always applied regardless of pagination
+    const query: Record<string, unknown> = { isDeleted: { $ne: true } };
 
-      const query: any = { isDeleted: { $ne: true } };
-
-      if (status && status !== "all") {
-        query.status = status;
-      }
-      if (category && category !== "all") {
-        query.category = category;
-      }
-      if (search && search.trim() !== "") {
+    if (status && status !== "all") {
+      query.status = status;
+    }
+    if (category && category !== "all") {
+      query.category = { $regex: new RegExp(`^${category.trim()}$`, "i") };
+    }
+    if (service && service !== "all") {
+      query.service = { $regex: new RegExp(`^${service.trim()}$`, "i") };
+    }
+    if (assignee && assignee !== "all") {
+      if (assignee === "unassigned") {
         query.$or = [
-          { fullName: { $regex: search.trim(), $options: "i" } },
-          { category: { $regex: search.trim(), $options: "i" } },
-          { address: { $regex: search.trim(), $options: "i" } },
-          { service: { $regex: search.trim(), $options: "i" } },
-          { phone: { $regex: search.trim(), $options: "i" } },
-        ];
+          { assignedTo: { $exists: false } },
+          { assignedTo: null },
+          { assignedTo: "" },
+        ] as unknown as Record<string, unknown>;
+      } else {
+        query.assignedTo = { $regex: new RegExp(`^${assignee.trim()}$`, "i") };
       }
+    }
+    if (search && search.trim() !== "") {
+      const searchRegex = { $regex: search.trim(), $options: "i" };
+      // If assignee filter already set $or, wrap with $and
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          {
+            $or: [
+              { fullName: searchRegex },
+              { category: searchRegex },
+              { address: searchRegex },
+              { service: searchRegex },
+              { phone: searchRegex },
+            ],
+          },
+        ] as unknown as Record<string, unknown>;
+        delete query.$or;
+      } else {
+        query.$or = [
+          { fullName: searchRegex },
+          { category: searchRegex },
+          { address: searchRegex },
+          { service: searchRegex },
+          { phone: searchRegex },
+        ] as unknown as Record<string, unknown>;
+      }
+    }
 
-      const totalLeads = await Lead.countDocuments(query);
-      const totalPages = Math.ceil(totalLeads / limit);
+    // Shared metadata query (always over full dataset for sidebar counts)
+    const [
+      distinctCategories,
+      distinctServices,
+      distinctSources,
+      distinctTimelines,
+      distinctBudgets,
+      distinctAssignees,
+      statusAgg,
+    ] = await Promise.all([
+      Lead.distinct("category", { isDeleted: { $ne: true } }),
+      Lead.distinct("service", { isDeleted: { $ne: true } }),
+      Lead.distinct("source", { isDeleted: { $ne: true } }),
+      Lead.distinct("timeline", { isDeleted: { $ne: true } }),
+      Lead.distinct("budget", { isDeleted: { $ne: true } }),
+      Lead.distinct("assignedTo", { isDeleted: { $ne: true } }),
+      Lead.aggregate([
+        { $match: { isDeleted: { $ne: true } } },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const categories = (distinctCategories as unknown[])
+      .filter((c): c is string => typeof c === "string" && c.trim() !== "")
+      .sort();
+    const services = (distinctServices as unknown[])
+      .filter((s): s is string => typeof s === "string" && s.trim() !== "")
+      .sort();
+    const sources = (distinctSources as unknown[])
+      .filter((s): s is string => typeof s === "string" && s.trim() !== "")
+      .sort();
+    const timelines = (distinctTimelines as unknown[])
+      .filter((t): t is string => typeof t === "string" && t.trim() !== "")
+      .sort();
+    const budgets = (distinctBudgets as unknown[])
+      .filter((b): b is string => typeof b === "string" && b.trim() !== "")
+      .sort();
+    const assignees = (distinctAssignees as unknown[])
+      .filter((a): a is string => typeof a === "string" && a.trim() !== "")
+      .sort();
+
+    // statusCounts always reflect the whole dataset (not the filtered view)
+    const totalAllLeads = await Lead.countDocuments({ isDeleted: { $ne: true } });
+    const statusCounts: Record<string, number> = { all: totalAllLeads };
+    (statusAgg as { _id: string; count: number }[]).forEach((item) => {
+      if (item._id) statusCounts[item._id] = item.count;
+    });
+
+    // --- Paginated response ---
+    if (pageStr || limitStr) {
+      const page = Math.max(1, parseInt(pageStr || "1"));
+      const limit = Math.max(1, parseInt(limitStr || "20"));
+
+      const totalFiltered = await Lead.countDocuments(query);
+      const totalPages = Math.ceil(totalFiltered / limit);
       const skip = (page - 1) * limit;
 
-      const [
-        leads,
-        distinctCategories,
-        distinctServices,
-        distinctSources,
-        distinctTimelines,
-        distinctBudgets,
-        statusAgg
-      ] = await Promise.all([
-        Lead.find(query)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit),
-        Lead.distinct("category", { isDeleted: { $ne: true } }),
-        Lead.distinct("service", { isDeleted: { $ne: true } }),
-        Lead.distinct("source", { isDeleted: { $ne: true } }),
-        Lead.distinct("timeline", { isDeleted: { $ne: true } }),
-        Lead.distinct("budget", { isDeleted: { $ne: true } }),
-        Lead.aggregate([
-          { $match: { isDeleted: { $ne: true } } },
-          { $group: { _id: "$status", count: { $sum: 1 } } }
-        ])
-      ]);
-
-      const categories = distinctCategories.filter((c): c is string => typeof c === "string" && c.trim() !== "").sort();
-      const services = distinctServices.filter((s): s is string => typeof s === "string" && s.trim() !== "").sort();
-      const sources = distinctSources.filter((s): s is string => typeof s === "string" && s.trim() !== "").sort();
-      const timelines = distinctTimelines.filter((t): t is string => typeof t === "string" && t.trim() !== "").sort();
-      const budgets = distinctBudgets.filter((b): b is string => typeof b === "string" && b.trim() !== "").sort();
-
-      // Build statusCounts map: { all: 120, new: 40, contacted: 25, ... }
-      const statusCounts: Record<string, number> = { all: totalLeads };
-      statusAgg.forEach((item: { _id: string; count: number }) => {
-        if (item._id) statusCounts[item._id] = item.count;
-      });
+      const leads = await Lead.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
       return NextResponse.json({
         success: true,
@@ -86,48 +141,19 @@ export async function GET(req: NextRequest) {
         sources,
         timelines,
         budgets,
+        assignees,
         statusCounts,
         pagination: {
-          total: totalLeads,
+          total: totalFiltered,
           totalPages,
           currentPage: page,
           limit,
-        }
+        },
       });
     }
 
-    const [
-      leads,
-      distinctCategories,
-      distinctServices,
-      distinctSources,
-      distinctTimelines,
-      distinctBudgets,
-      statusAgg
-    ] = await Promise.all([
-      Lead.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }),
-      Lead.distinct("category", { isDeleted: { $ne: true } }),
-      Lead.distinct("service", { isDeleted: { $ne: true } }),
-      Lead.distinct("source", { isDeleted: { $ne: true } }),
-      Lead.distinct("timeline", { isDeleted: { $ne: true } }),
-      Lead.distinct("budget", { isDeleted: { $ne: true } }),
-      Lead.aggregate([
-        { $match: { isDeleted: { $ne: true } } },
-        { $group: { _id: "$status", count: { $sum: 1 } } }
-      ])
-    ]);
-
-    const categories = distinctCategories.filter((c): c is string => typeof c === "string" && c.trim() !== "").sort();
-    const services = distinctServices.filter((s): s is string => typeof s === "string" && s.trim() !== "").sort();
-    const sources = distinctSources.filter((s): s is string => typeof s === "string" && s.trim() !== "").sort();
-    const timelines = distinctTimelines.filter((t): t is string => typeof t === "string" && t.trim() !== "").sort();
-    const budgets = distinctBudgets.filter((b): b is string => typeof b === "string" && b.trim() !== "").sort();
-
-    // Build statusCounts map: { all: 120, new: 40, contacted: 25, ... }
-    const statusCounts: Record<string, number> = { all: leads.length };
-    statusAgg.forEach((item: { _id: string; count: number }) => {
-      if (item._id) statusCounts[item._id] = item.count;
-    });
+    // --- Non-paginated response (all matching leads) ---
+    const leads = await Lead.find(query).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
@@ -138,6 +164,7 @@ export async function GET(req: NextRequest) {
       sources,
       timelines,
       budgets,
+      assignees,
       statusCounts,
     });
   } catch (error) {

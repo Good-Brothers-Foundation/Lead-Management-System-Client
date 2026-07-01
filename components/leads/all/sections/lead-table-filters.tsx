@@ -9,22 +9,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 interface LeadTableFiltersProps {
+  // Search
   searchQuery: string;
   onSearchChange: (value: string) => void;
+
+  // Status
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
+  statusCounts?: Record<string, number>;
+
+  // Category
   categoryFilter: string;
   onCategoryFilterChange: (category: string) => void;
   categories: string[];
-  statusCounts?: Record<string, number>;
+
+  // Service
+  serviceFilter: string;
+  onServiceFilterChange: (service: string) => void;
+  services: string[];
+
+  // Assignee
+  assigneeFilter: string;
+  onAssigneeFilterChange: (assignee: string) => void;
+  assignees: string[];
 }
 
 const STATUS_OPTIONS = ["all", "new", "contacted", "qualified", "proposal", "converted", "unqualified"] as const;
 
 const STATUS_LABELS: Record<string, string> = {
-  all: "All Pools",
+  all: "All Leads",
   proposal: "Proposal Sent",
   unqualified: "Unqualified",
   new: "New",
@@ -38,77 +54,98 @@ export function LeadTableFilters({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  statusCounts = {},
   categoryFilter,
   onCategoryFilterChange,
   categories,
-  statusCounts = {},
+  serviceFilter,
+  onServiceFilterChange,
+  services,
+  assigneeFilter,
+  onAssigneeFilterChange,
+  assignees,
 }: LeadTableFiltersProps) {
-  return (
-    <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card p-4 border border-border rounded-xl shadow-sm">
-      {/* Search and Category filters container */}
-      <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center">
-        {/* Search Input */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, category, address..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-10 bg-background border-input focus-visible:ring-1"
-          />
-        </div>
+  // Build option arrays for searchable selects
+  const categoryOptions = [
+    { value: "all", label: "All Categories" },
+    ...categories.map((c) => ({ value: c, label: c })),
+  ];
 
-        {/* Category Select Dropdown */}
-        <div className="w-full sm:w-56">
-          <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
-            <SelectTrigger className="h-10 bg-background border-input">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+  const serviceOptions = [
+    { value: "all", label: "All Services" },
+    ...services.map((s) => ({ value: s, label: s })),
+  ];
+
+  const assigneeOptions = [
+    { value: "all", label: "All Assignees" },
+    { value: "unassigned", label: "Unassigned" },
+    ...assignees.map((a) => ({ value: a, label: a })),
+  ];
+
+  return (
+    <div className="bg-card p-4 border border-border rounded-xl shadow-sm space-y-4">
+
+      {/* Top Row: Primary Search */}
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search name, category, address..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-9 h-10 bg-background border-input focus-visible:ring-1 w-full"
+        />
       </div>
 
-      {/* Filter Tabs with Live Counts */}
-      <div className="flex flex-wrap gap-1.5 w-full lg:w-auto justify-start lg:justify-end">
-        {STATUS_OPTIONS.map((status) => {
-          const count = statusCounts[status];
-          const isActive = statusFilter === status;
-          return (
-            <button
-              key={status}
-              type="button"
-              onClick={() => onStatusFilterChange(status)}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all border cursor-pointer select-none
-                ${
-                  isActive
-                    ? "bg-(--button-secondary) text-white border-transparent shadow-sm"
-                    : "bg-background text-muted-foreground border-border hover:bg-muted/50"
-                }`}
-            >
-              {STATUS_LABELS[status] ?? status}
-              {count !== undefined && count > 0 && (
-                <span
-                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black tabular-nums leading-none
-                    ${
-                      isActive
-                        ? "bg-white/25 text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Bottom Row: Secondary Filters Grid — 1 col mobile, 2 tablet, 4 desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+        {/* Status — plain Select (fixed small list, no search needed) */}
+        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+          <SelectTrigger className="h-10 w-full bg-background border-input font-medium">
+            <SelectValue placeholder="Select Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((status) => {
+              const count = statusCounts[status];
+              const label = STATUS_LABELS[status] ?? status;
+              const displayLabel =
+                count !== undefined && count > 0 ? `${label} (${count})` : label;
+              return (
+                <SelectItem key={status} value={status}>
+                  {displayLabel}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+
+        {/* Category — searchable (can be 50+ items) */}
+        <SearchableSelect
+          value={categoryFilter}
+          onValueChange={onCategoryFilterChange}
+          options={categoryOptions}
+          placeholder="All Categories"
+          searchPlaceholder="Search categories..."
+        />
+
+        {/* Service — searchable */}
+        <SearchableSelect
+          value={serviceFilter}
+          onValueChange={onServiceFilterChange}
+          options={serviceOptions}
+          placeholder="All Services"
+          searchPlaceholder="Search services..."
+        />
+
+        {/* Assignee — searchable */}
+        <SearchableSelect
+          value={assigneeFilter}
+          onValueChange={onAssigneeFilterChange}
+          options={assigneeOptions}
+          placeholder="All Assignees"
+          searchPlaceholder="Search assignees..."
+        />
+
       </div>
     </div>
   );

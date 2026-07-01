@@ -7,6 +7,7 @@ interface LeadsListResponse {
   data: LeadFormData[];
   categories?: string[];
   services?: string[];
+  assignees?: string[];
   sources?: string[];
   timelines?: string[];
   budgets?: string[];
@@ -32,6 +33,8 @@ export const leadsApi = {
     status?: string;
     category?: string;
     search?: string;
+    service?: string;
+    assignee?: string;
   }) {
     let url = "/leads";
     if (params) {
@@ -41,7 +44,9 @@ export const leadsApi = {
       if (params.status && params.status !== "all") searchParams.append("status", params.status);
       if (params.category && params.category !== "all") searchParams.append("category", params.category);
       if (params.search && params.search.trim() !== "") searchParams.append("search", params.search.trim());
-      
+      if (params.service && params.service !== "all") searchParams.append("service", params.service);
+      if (params.assignee && params.assignee !== "all") searchParams.append("assignee", params.assignee);
+
       const queryStr = searchParams.toString();
       if (queryStr) {
         url += `?${queryStr}`;
