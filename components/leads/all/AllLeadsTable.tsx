@@ -185,9 +185,10 @@ export default function AllLeadsTable() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
-  // Client-side pagination page (operates on filteredLeads)
+  // Client-side pagination page (operates on sortedLeads)
   const [clientPage, setClientPage] = useState(1);
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -217,6 +218,11 @@ export default function AllLeadsTable() {
 
   const handleAssigneeFilterChange = (assignee: string) => {
     setAssigneeFilter(assignee);
+    setClientPage(1);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
     setClientPage(1);
   };
 
@@ -337,17 +343,41 @@ export default function AllLeadsTable() {
     });
   }, [leads, statusFilter, categoryFilter, debouncedSearch, serviceFilter, assigneeFilter]);
 
-  // --- Client-side pagination on filteredLeads ---
-  const totalFiltered = filteredLeads.length;
+  // --- Client-side sorting on filteredLeads ---
+  const sortedLeads = useMemo(() => {
+    const arr = [...filteredLeads];
+    switch (sortBy) {
+      case "az":
+        return arr.sort((a, b) => a.fullName.localeCompare(b.fullName));
+      case "za":
+        return arr.sort((a, b) => b.fullName.localeCompare(a.fullName));
+      case "oldest":
+        return arr.sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() -
+            new Date(a.createdAt ?? 0).getTime()
+        );
+      case "newest":
+      default:
+        return arr.sort(
+          (a, b) =>
+            new Date(a.createdAt ?? 0).getTime() -
+            new Date(b.createdAt ?? 0).getTime()
+        );
+    }
+  }, [filteredLeads, sortBy]);
+
+  // --- Client-side pagination on sortedLeads ---
+  const totalFiltered = sortedLeads.length;
   const totalClientPages = Math.max(1, Math.ceil(totalFiltered / CLIENT_PAGE_LIMIT));
 
-  // Clamp clientPage if filteredLeads shrinks (e.g. after applying a new filter)
+  // Clamp clientPage if sortedLeads shrinks (e.g. after applying a new filter)
   const safePage = Math.min(clientPage, totalClientPages);
 
   const paginatedLeads = useMemo(() => {
     const start = (safePage - 1) * CLIENT_PAGE_LIMIT;
-    return filteredLeads.slice(start, start + CLIENT_PAGE_LIMIT);
-  }, [filteredLeads, safePage]);
+    return sortedLeads.slice(start, start + CLIENT_PAGE_LIMIT);
+  }, [sortedLeads, safePage]);
 
   const startItem = totalFiltered > 0 ? (safePage - 1) * CLIENT_PAGE_LIMIT + 1 : 0;
   const endItem = Math.min(safePage * CLIENT_PAGE_LIMIT, totalFiltered);
@@ -389,6 +419,9 @@ export default function AllLeadsTable() {
         assigneeFilter={assigneeFilter}
         onAssigneeFilterChange={handleAssigneeFilterChange}
         assignees={assignees}
+
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
       />
 
       <div className="flex justify-end items-center gap-2">
@@ -568,7 +601,7 @@ export default function AllLeadsTable() {
         </div>
       ) : (
         <LeadKanbanBoard
-          leads={filteredLeads}
+          leads={sortedLeads}
           onViewDetails={handleOpenDetails}
           onUpdateLead={handleUpdateLeadRecord}
         />
